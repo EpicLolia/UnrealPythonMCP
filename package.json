@@ -1,0 +1,33 @@
+{
+  "name": "unreal_python_mcp",
+  "version": "0.1.0",
+  "description": "Unreal Engine MCP using Unreal Python Remote Execution",
+  "main": "dist/index.js",
+  "bin": {
+    "unreal_python_mcp": "dist/bin.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "unreal",
+    "python",
+    "mcp"
+  ],
+  "author": "loiafeng",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.24.3",
+    "unreal-remote-execution": "^1.0.0",
+    "zod": "^4.1.13"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.34.0",
+    "eslint": "^9.34.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "prettier": "3.6.2",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.41.0"
+  }
+}

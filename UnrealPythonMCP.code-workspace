@@ -1,0 +1,68 @@
+{
+  "folders": [
+    {
+      "path": "."
+    },
+  ],
+  "settings": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "files.eol": "\n",
+    "editor.codeActionsOnSave": {
+      "source.removeUnusedImports": "explicit",
+      "source.fixAll.eslint": "explicit"
+    },
+  },
+  "launch": {
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "Hello World",
+        "skipFiles": ["<node_internals>/**"],
+        "program": "${workspaceFolder}/dist/test",
+        "args": ["--runInBand"],
+        "preLaunchTask": "tsc build",
+        "console": "integratedTerminal"
+      },
+    ],
+    "compounds": []
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "tsc build",
+        "type": "shell",
+        "command": "npx",
+        "args": ["tsc", "-p", "tsconfig.json"],
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "isBackground": true,
+        "problemMatcher": ["$tsc-watch"]
+      },
+      {
+        "label": "tsc watch",
+        "type": "shell",
+        "command": "npx",
+        "args": [
+          "tsc",
+          "-p",
+          "tsconfig.json",
+          "--watch",
+          "--preserveWatchOutput"
+        ],
+        "group": {
+          "kind": "build"
+        },
+        "isBackground": true,
+        "problemMatcher": ["$tsc-watch"]
+      },
+    ]
+  }
+}
