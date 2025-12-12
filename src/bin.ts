@@ -1,16 +1,13 @@
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import * as z from 'zod/v4';
-import { CallToolResult } from '@modelcontextprotocol/sdk/types';
+import { CallToolResult, ReadResourceResult } from '@modelcontextprotocol/sdk/types';
 import { runCommand } from '.';
-
-const transport = new StdioServerTransport();
 
 const server = new McpServer({
   version: '0.1.0',
   name: 'unreal-python-mcp',
 });
-server.connect(transport);
 
 server.registerTool(
   'run_python_code',
@@ -35,3 +32,25 @@ server.registerTool(
     };
   },
 );
+server.registerResource(
+  'unreal_python_api_docs',
+  'https://dev.epicgames.com/documentation/en-us/unreal-engine/python-api/',
+  {
+    title: 'Unreal Engine Python API Documentation',
+    description: 'Official documentation for Unreal Engine Python API',
+    mimeType: 'text/plain',
+  },
+  async (): Promise<ReadResourceResult> => {
+    return {
+      contents: [
+        {
+          uri: 'https://dev.epicgames.com/documentation/en-us/unreal-engine/python-api/',
+          text: 'Unreal Engine Python API Documentation',
+        },
+      ],
+    };
+  },
+);
+
+const transport = new StdioServerTransport();
+server.connect(transport);

@@ -9,7 +9,7 @@
      "mcpServers": {
        "unreal": {
          "command": "npx",
-         "args": ["-y", "@runreal/unreal-mcp"]
+         "args": ["-y", "unreal-python-mcp"]
        }
      }
    }

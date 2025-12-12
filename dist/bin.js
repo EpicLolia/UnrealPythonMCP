@@ -37,12 +37,10 @@ const stdio_js_1 = require("@modelcontextprotocol/sdk/server/stdio.js");
 const mcp_js_1 = require("@modelcontextprotocol/sdk/server/mcp.js");
 const z = __importStar(require("zod/v4"));
 const _1 = require(".");
-const transport = new stdio_js_1.StdioServerTransport();
 const server = new mcp_js_1.McpServer({
     version: '0.1.0',
     name: 'unreal-python-mcp',
 });
-server.connect(transport);
 server.registerTool('run_python_code', {
     title: 'Run Python Code',
     description: 'Execute python code within the Unreal Editor. All python must have `import unreal` at the top. CHECK THE UNREAL PYTHON DOCUMENTATION BEFORE USING THIS TOOL. NEVER EVER ADD COMMENTS',
@@ -60,4 +58,20 @@ server.registerTool('run_python_code', {
         ],
     };
 });
+server.registerResource('unreal_python_api_docs', 'https://dev.epicgames.com/documentation/en-us/unreal-engine/python-api/', {
+    title: 'Unreal Engine Python API Documentation',
+    description: 'Official documentation for Unreal Engine Python API',
+    mimeType: 'text/plain',
+}, async () => {
+    return {
+        contents: [
+            {
+                uri: 'https://dev.epicgames.com/documentation/en-us/unreal-engine/python-api/',
+                text: 'Unreal Engine Python API Documentation',
+            },
+        ],
+    };
+});
+const transport = new stdio_js_1.StdioServerTransport();
+server.connect(transport);
 //# sourceMappingURL=bin.js.map
