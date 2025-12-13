@@ -35,7 +35,13 @@ async function getUnrealPythonStub() {
     return result.output[0]?.output;
 }
 function commandResultToJsonString(result) {
-    const lines = result.output.map((item) => (item.type !== 'Info' ? `[${item.type}] ` : '') + item.output.replace(/\r\n|\r/g, '\n'));
+    const lines = result.output.map((item) => {
+        let line = item.type !== 'Info' ? `[${item.type}] ` : '';
+        line += item.output.replace(/\r\n|\r/g, '\n');
+        if (!line.endsWith('\n'))
+            line += '\n';
+        return line;
+    });
     if (result.result !== 'None') {
         lines.push(result.result.replace(/\r\n|\r/g, '\n') + '\n');
         lines.push('Note: Refer to the Unreal Python API Stub (using tool `get_python_api_stub`) for available classes and methods.\n');
