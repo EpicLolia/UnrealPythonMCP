@@ -8,7 +8,7 @@ import { commandResultToJsonString, getUnrealPythonStub, runCommand, runFile } f
 
 const server = new McpServer(
   {
-    version: '0.1.3',
+    version: '0.1.4',
     name: 'unreal-python-mcp',
     title: 'Unreal Python MCP Server',
   },

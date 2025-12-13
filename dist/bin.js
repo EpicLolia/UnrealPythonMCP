@@ -39,12 +39,15 @@ const mcp_js_1 = require("@modelcontextprotocol/sdk/server/mcp.js");
 const z = __importStar(require("zod/v4"));
 const _1 = require(".");
 const server = new mcp_js_1.McpServer({
-    version: '0.1.2',
+    version: '0.1.4',
     name: 'unreal-python-mcp',
+    title: 'Unreal Python MCP Server',
+}, {
+    instructions: 'This server provides Python scripting capabilities for Unreal Editor. Use `get_python_api_stub` tool to get the stub file path, then search within it to find available classes and methods.',
 });
 server.registerTool('run_python_code', {
     title: 'Run Python Code in Unreal Editor',
-    description: 'Execute Python code within Unreal Editor. Note: 1) Use `import unreal` to access the Unreal Python API. 2) Refer to the Unreal Python API Stub (using tool `get_python_api_stub`) for available classes and methods. 3) Avoid adding comments in the code.',
+    description: 'Execute Python code within Unreal Editor. Notes:\n  1) Access the Unreal Python API by code `import unreal`\n  2) Use `get_python_api_stub` tool to get the stub file path, then search within it to find available classes and methods.\n  3) Avoid adding comments in the code.',
     inputSchema: {
         code: z.string().describe('Python code to execute'),
     },
