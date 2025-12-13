@@ -6,17 +6,24 @@ import * as z from 'zod/v4';
 import { CallToolResult, ReadResourceResult } from '@modelcontextprotocol/sdk/types';
 import { commandResultToJsonString, getUnrealPythonStub, runCommand, runFile } from '.';
 
-const server = new McpServer({
-  version: '0.1.2',
-  name: 'unreal-python-mcp',
-});
+const server = new McpServer(
+  {
+    version: '0.1.3',
+    name: 'unreal-python-mcp',
+    title: 'Unreal Python MCP Server',
+  },
+  {
+    instructions:
+      'This server provides Python scripting capabilities for Unreal Editor. Use `get_python_api_stub` tool to get the stub file path, then search within it to find available classes and methods.',
+  },
+);
 
 server.registerTool(
   'run_python_code',
   {
     title: 'Run Python Code in Unreal Editor',
     description:
-      'Execute Python code within Unreal Editor. Note: 1) Use `import unreal` to access the Unreal Python API. 2) Refer to the Unreal Python API Stub (using tool `get_python_api_stub`) for available classes and methods. 3) Avoid adding comments in the code.',
+      'Execute Python code within Unreal Editor. Notes:\n  1) Access the Unreal Python API by code `import unreal`\n  2) Use `get_python_api_stub` tool to get the stub file path, then search within it to find available classes and methods.\n  3) Avoid adding comments in the code.',
     inputSchema: {
       code: z.string().describe('Python code to execute'),
     },
