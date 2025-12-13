@@ -35,10 +35,11 @@ async function getUnrealPythonStub() {
     return result.output[0]?.output;
 }
 function commandResultToJsonString(result) {
-    return JSON.stringify({
-        success: result.success ? undefined : false,
-        output: result.output?.length > 0 ? result.output.map((item) => `[${item.type}] ${item.output}`).join('') : undefined,
-        result: result.result !== 'None' ? result.result : undefined,
-    });
+    const lines = result.output.map((item) => `[${item.type}] ${item.output}`);
+    if (result.result !== 'None') {
+        lines.push(result.result);
+        lines.push('Note: Refer to the Unreal Python API Stub (using tool `get_python_api_stub`) for available classes and methods.');
+    }
+    return lines.join('');
 }
 //# sourceMappingURL=index.js.map

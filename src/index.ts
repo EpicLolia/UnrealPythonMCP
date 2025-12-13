@@ -34,9 +34,10 @@ export async function getUnrealPythonStub() {
 }
 
 export function commandResultToJsonString(result: IRemoteExecutionMessageCommandOutputData) {
-  return JSON.stringify({
-    success: result.success ? undefined : false,
-    output: result.output?.length > 0 ? result.output.map((item) => `[${item.type}] ${item.output}`).join('') : undefined,
-    result: result.result !== 'None' ? result.result : undefined,
-  });
+  const lines = result.output.map((item) => `[${item.type}] ${item.output}`);
+  if (result.result !== 'None') {
+    lines.push(result.result);
+    lines.push('Note: Refer to the Unreal Python API Stub (using tool `get_python_api_stub`) for available classes and methods.');
+  }
+  return lines.join('');
 }

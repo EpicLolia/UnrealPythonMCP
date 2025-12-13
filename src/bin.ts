@@ -7,7 +7,7 @@ import { CallToolResult, ReadResourceResult } from '@modelcontextprotocol/sdk/ty
 import { commandResultToJsonString, getUnrealPythonStub, runCommand, runFile } from '.';
 
 const server = new McpServer({
-  version: '0.1.1',
+  version: '0.1.2',
   name: 'unreal-python-mcp',
 });
 
