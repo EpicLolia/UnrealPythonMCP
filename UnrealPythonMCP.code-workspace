@@ -21,7 +21,7 @@
       {
         "type": "node",
         "request": "launch",
-        "name": "Hello World",
+        "name": "test",
         "skipFiles": ["<node_internals>/**"],
         "program": "${workspaceFolder}/dist/test",
         "args": ["--runInBand"],
@@ -63,6 +63,18 @@
         "isBackground": true,
         "problemMatcher": ["$tsc-watch"]
       },
+      {
+        "label": "npm publish",
+        "type": "shell",
+        "command": "npm",
+        "args": ["publish"],
+        "group": {
+          "kind": "build"
+        },
+        "isBackground": true,
+        "problemMatcher": ["$tsc-watch"],
+        "dependsOn": ["tsc build"]
+      }
     ]
   }
 }
