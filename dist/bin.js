@@ -39,20 +39,18 @@ const mcp_js_1 = require("@modelcontextprotocol/sdk/server/mcp.js");
 const z = __importStar(require("zod/v4"));
 const _1 = require(".");
 const server = new mcp_js_1.McpServer({
-    version: '0.1.0',
+    version: '0.1.1',
     name: 'unreal-python-mcp',
 });
 server.registerTool('run_python_code', {
     title: 'Run Python Code in Unreal Editor',
-    description: 'Execute Python code within Unreal Editor. Note: 1) Use `import unreal` to access the Unreal Python API. 2) Refer to the Unreal Python API documentation for available classes and methods. 3) Avoid adding comments in the code.',
+    description: 'Execute Python code within Unreal Editor. Note: 1) Use `import unreal` to access the Unreal Python API. 2) Refer to the Unreal Python API Stub (using tool `get_python_api_stub`) for available classes and methods. 3) Avoid adding comments in the code.',
     inputSchema: {
         code: z.string().describe('Python code to execute'),
     },
 }, async ({ code }) => {
     const result = await (0, _1.runCommand)(code);
-    return {
-        content: [{ type: 'text', text: result.output.map((line) => line.output).join('\n') }],
-    };
+    return { content: [{ type: 'text', text: (0, _1.commandResultToJsonString)(result) }] };
 });
 server.registerTool('run_python_file', {
     title: 'Run Python File in Unreal Editor',
@@ -63,13 +61,14 @@ server.registerTool('run_python_file', {
     },
 }, async ({ path, args }) => {
     const result = await (0, _1.runFile)(path, args);
-    return { content: [{ type: 'text', text: result.output.map((line) => line.output).join('\n') }] };
+    return { content: [{ type: 'text', text: (0, _1.commandResultToJsonString)(result) }] };
 });
-server.registerTool('get_unreal_python_api_stub_path', {
-    title: 'Get Unreal Python API Stub Path',
+server.registerTool('get_python_api_stub', {
+    title: 'Get Unreal Python API Stub File Path',
     description: 'Returns the local file path of the auto-generated Python API stub (unreal.py) for the current Unreal Engine project. Use this path to read the stub file for type hints and API reference. Note: The stub file can be very large (40MB+).',
 }, async () => {
-    return { content: [{ type: 'text', text: await (0, _1.getUnrealPythonStub)() }] };
+    const path = await (0, _1.getUnrealPythonStub)();
+    return { content: [{ type: 'text', text: path }] };
 });
 server.registerResource('unreal_python_api_docs', 'resource://unreal/python-api-docs', {
     title: 'Unreal Engine Python API Documentation',
@@ -91,9 +90,7 @@ server.registerResource('unreal_python_api_stub', 'resource://unreal/python-stub
     mimeType: 'text/plain',
 }, async () => {
     const path = await (0, _1.getUnrealPythonStub)();
-    return {
-        contents: [{ uri: `file:///${path}`, text: `Unreal Python API stub file location: ${path}` }],
-    };
+    return { contents: [{ uri: `file:///${path}`, text: `Unreal Python API stub file location: ${path}` }] };
 });
 const transport = new stdio_js_1.StdioServerTransport();
 server.connect(transport);

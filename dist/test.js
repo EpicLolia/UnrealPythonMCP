@@ -4,11 +4,11 @@ const _1 = require(".");
 async function test() {
     {
         const result = await (0, _1.runCommand)('print("Hello World")');
-        console.log(result.output.map((line) => line.output).join('\n'));
+        console.log((0, _1.commandResultToJsonString)(result));
     }
     {
         const result = await (0, _1.runFile)(`${__dirname}/sample.py`, ['arg1', 'arg2']);
-        console.log(result.output.map((line) => line.output).join('\n'));
+        console.log((0, _1.commandResultToJsonString)(result));
     }
     {
         const result = await (0, _1.getUnrealPythonStub)();

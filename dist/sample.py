@@ -1,4 +1,5 @@
 import sys
 
 if __name__ == "__main__":
-    print(f"run {__file__} with args {sys.argv}")
+    print(f"run {__file__}")
+    print(f"args: {sys.argv}")

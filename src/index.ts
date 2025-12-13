@@ -1,4 +1,4 @@
-import { RemoteExecution, RemoteExecutionConfig } from 'unreal-remote-execution';
+import { IRemoteExecutionMessageCommandOutputData, RemoteExecution, RemoteExecutionConfig } from 'unreal-remote-execution';
 
 const config = new RemoteExecutionConfig(1, ['239.0.0.1', 6766], '127.0.0.1');
 
@@ -30,5 +30,13 @@ const GET_UNREAL_PYTHON_STUB = `import unreal;print(f'{unreal.Paths.convert_rela
 
 export async function getUnrealPythonStub() {
   const result = await runCommand(GET_UNREAL_PYTHON_STUB);
-  return result.output.map((line) => line.output).join('\n');
+  return result.output[0]?.output;
+}
+
+export function commandResultToJsonString(result: IRemoteExecutionMessageCommandOutputData) {
+  return JSON.stringify({
+    success: result.success ? undefined : false,
+    output: result.output?.length > 0 ? result.output.map((item) => `[${item.type}] ${item.output}`).join('') : undefined,
+    result: result.result !== 'None' ? result.result : undefined,
+  });
 }

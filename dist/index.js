@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.runCommand = runCommand;
 exports.runFile = runFile;
 exports.getUnrealPythonStub = getUnrealPythonStub;
+exports.commandResultToJsonString = commandResultToJsonString;
 const unreal_remote_execution_1 = require("unreal-remote-execution");
 const config = new unreal_remote_execution_1.RemoteExecutionConfig(1, ['239.0.0.1', 6766], '127.0.0.1');
 const HELPER = `
@@ -31,6 +32,13 @@ async function runFile(path, args) {
 const GET_UNREAL_PYTHON_STUB = `import unreal;print(f'{unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_intermediate_dir())}PythonStub/unreal.py')`;
 async function getUnrealPythonStub() {
     const result = await runCommand(GET_UNREAL_PYTHON_STUB);
-    return result.output.map((line) => line.output).join('\n');
+    return result.output[0]?.output;
+}
+function commandResultToJsonString(result) {
+    return JSON.stringify({
+        success: result.success ? undefined : false,
+        output: result.output?.length > 0 ? result.output.map((item) => `[${item.type}] ${item.output}`).join('') : undefined,
+        result: result.result !== 'None' ? result.result : undefined,
+    });
 }
 //# sourceMappingURL=index.js.map
