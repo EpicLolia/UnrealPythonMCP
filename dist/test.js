@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const _1 = require(".");
 async function test() {
     {
-        const result = await (0, _1.runCommand)('print("Hello World")');
+        const result = await (0, _1.runCommand)('print("Hello World"');
         console.log((0, _1.commandResultToJsonString)(result));
     }
     {
