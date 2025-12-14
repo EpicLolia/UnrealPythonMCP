@@ -43,7 +43,7 @@ const server = new mcp_js_1.McpServer({
     name: 'unreal-python-mcp',
     title: 'Unreal Python MCP Server',
 }, {
-    instructions: '',
+    instructions: 'Provides tools to execute Python script in Unreal Editor',
 });
 server.registerTool('run_python_code', {
     title: 'Run Python Code in Unreal Editor',
@@ -57,8 +57,8 @@ server.registerTool('run_python_code', {
     return { content: [{ type: 'text', text: (0, _1.commandResultToJsonString)(result) }] };
 });
 server.registerTool('run_python_file', {
-    title: 'Run Python File in Unreal Editor',
-    description: 'Execute Python script file within Unreal Editor.',
+    title: 'Run Python Script File in Unreal Editor',
+    description: 'Execute Python script within Unreal Editor.',
     inputSchema: {
         path: z.string().describe('Absolute path to the script to execute'),
         args: z.array(z.string()).optional().describe('Optional command-line arguments to pass to the script'),
@@ -68,8 +68,8 @@ server.registerTool('run_python_file', {
     return { content: [{ type: 'text', text: (0, _1.commandResultToJsonString)(result) }] };
 });
 server.registerTool('get_python_stub', {
-    title: 'Get Unreal Python Stub File Path',
-    description: 'Returns the file path of the auto-generated unreal python stub (unreal.py).',
+    title: 'Get Unreal Python Stub Path',
+    description: 'Returns the file path of the auto-generated Unreal Python stub (unreal.py).',
 }, async () => {
     const path = await (0, _1.getUnrealPythonStub)();
     return { content: [{ type: 'text', text: path }] };
