@@ -39,7 +39,7 @@ const mcp_js_1 = require("@modelcontextprotocol/sdk/server/mcp.js");
 const z = __importStar(require("zod/v4"));
 const _1 = require(".");
 const server = new mcp_js_1.McpServer({
-    version: '0.1.5',
+    version: '0.1.7',
     name: 'unreal-python-mcp',
     title: 'Unreal Python MCP Server',
 }, {
