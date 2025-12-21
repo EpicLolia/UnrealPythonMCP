@@ -9,7 +9,7 @@
    ```json
    {
      "mcpServers": {
-       "unreal": {
+       "unreal-python-mcp": {
          "command": "npx",
          "args": ["-y", "unreal-python-mcp"]
        }
@@ -18,7 +18,33 @@
    ```
 5. Enjoy it!
 
-- If your mcp client does not support auto install node packages, you can run `npm install --save-dev unreal-python-mcp` in your workspace
+> If your mcp client does not support auto install node packages, you can run `npm install --save-dev unreal-python-mcp` in your workspace
+
+## Configuration (Optional)
+
+You can customize the remote execution connection via environment variables:
+
+| Environment Variable     | Description             | Default     |
+| ------------------------ | ----------------------- | ----------- |
+| `UNREAL_MULTICAST_GROUP` | Multicast group address | `239.0.0.1` |
+| `UNREAL_MULTICAST_PORT`  | Multicast port          | `6766`      |
+| `UNREAL_BIND_ADDRESS`    | Bind address            | `127.0.0.1` |
+
+Example with custom configuration:
+
+```json
+{
+  "mcpServers": {
+    "unreal-python-mcp": {
+      "command": "npx",
+      "args": ["-y", "unreal-python-mcp"],
+      "env": {
+        "UNREAL_BIND_ADDRESS": "0.0.0.0"
+      }
+    }
+  }
+}
+```
 
 ## Reference
 

@@ -1,6 +1,10 @@
 import { IRemoteExecutionMessageCommandOutputData, RemoteExecution, RemoteExecutionConfig } from 'unreal-remote-execution';
 
-const config = new RemoteExecutionConfig(1, ['239.0.0.1', 6766], '127.0.0.1');
+const multicastGroup = process.env.UNREAL_MULTICAST_GROUP || '239.0.0.1';
+const multicastPort = parseInt(process.env.UNREAL_MULTICAST_PORT || '6766', 10);
+const bindAddress = process.env.UNREAL_BIND_ADDRESS || '127.0.0.1';
+
+const config = new RemoteExecutionConfig(1, [multicastGroup, multicastPort], bindAddress);
 
 export async function runCommand(code: string) {
   const remoteExecution = new RemoteExecution(config);

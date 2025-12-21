@@ -5,7 +5,10 @@ exports.runFile = runFile;
 exports.getUnrealPythonStub = getUnrealPythonStub;
 exports.commandResultToJsonString = commandResultToJsonString;
 const unreal_remote_execution_1 = require("unreal-remote-execution");
-const config = new unreal_remote_execution_1.RemoteExecutionConfig(1, ['239.0.0.1', 6766], '127.0.0.1');
+const multicastGroup = process.env.UNREAL_MULTICAST_GROUP || '239.0.0.1';
+const multicastPort = parseInt(process.env.UNREAL_MULTICAST_PORT || '6766', 10);
+const bindAddress = process.env.UNREAL_BIND_ADDRESS || '127.0.0.1';
+const config = new unreal_remote_execution_1.RemoteExecutionConfig(1, [multicastGroup, multicastPort], bindAddress);
 async function runCommand(code) {
     const remoteExecution = new unreal_remote_execution_1.RemoteExecution(config);
     remoteExecution.start();
