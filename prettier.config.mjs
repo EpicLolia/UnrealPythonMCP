@@ -9,6 +9,7 @@ const config = {
   endOfLine: 'lf',
   printWidth: 140,
   singleQuote: true,
+  tabWidth: 2,
 };
 
 export default config;

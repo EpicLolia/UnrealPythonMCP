@@ -1,21 +1,33 @@
 // @ts-check
 
-import eslint from '@eslint/js';
+// https://eslint.org/docs/latest/use/configure/configuration-files
+// https://prettier.io/docs/integrating-with-linters
+// https://typescript-eslint.io/getting-started/
+// https://www.npmjs.com/package/@eslint/js
+// https://github.com/eslint/json
+
+import { defineConfig } from 'eslint/config';
+import js from '@eslint/js';
+import json from '@eslint/json';
 import tseslint from 'typescript-eslint';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 
-export default tseslint.config(
+export default defineConfig([
   {
-    ignores: ['node_modules', 'Output'],
+    ignores: ['node_modules', 'dist'],
   },
 
-  eslint.configs.recommended,
-  tseslint.configs.strict,
-  tseslint.configs.stylistic,
-
-  eslintPluginPrettierRecommended,
+  {
+    files: ['**/*.json'],
+    ignores: ['package-lock.json'],
+    plugins: { json },
+    language: 'json/json',
+    extends: ['json/recommended'],
+  },
 
   {
+    files: ['**/*.ts'],
+    extends: [js.configs.recommended, tseslint.configs.strict, tseslint.configs.stylistic],
     rules: {
       '@typescript-eslint/no-empty-function': 'off',
       '@typescript-eslint/no-empty-object-type': 'off',
@@ -24,4 +36,6 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-function-type': 'off',
     },
   },
-);
+
+  eslintPluginPrettierRecommended,
+]);
