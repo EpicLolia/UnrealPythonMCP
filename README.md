@@ -18,8 +18,6 @@
    ```
 5. Enjoy it!
 
-> If your mcp client does not support auto install node packages, you can run `npm install --save-dev unreal-python-mcp` in your workspace
-
 ## Configuration (Optional)
 
 You can customize the remote execution connection via environment variables:
