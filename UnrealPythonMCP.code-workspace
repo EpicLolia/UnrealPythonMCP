@@ -13,7 +13,6 @@
     },
 
     "editor.tabSize": 2,
-    "js/ts.tsdk.path": "node_modules\\typescript\\lib",
   },
   "tasks": {
     "version": "2.0.0",
