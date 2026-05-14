@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "vscode-task-mcp": {
+    "unreal-python-mcp": {
       "command": "node",
       "args": ["./dist/server.js"]
     }
