@@ -40,80 +40,52 @@ export async function runFile(path: string, args?: string[]) {
 export async function getUnrealPythonStub() {
   const code = `import unreal;print(f'{unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_intermediate_dir())}PythonStub/unreal.py')`;
   const result = await runCommand(code);
-  return result.output[0]?.output;
+  const path = result.output[0]?.output;
+  if (!path) throw new Error('Failed to get Python stub path from Unreal Editor');
+  return path;
 }
 
 // #region ToolsetRegistry
 
-interface ToolSchema {
+export interface ToolSchema {
   name: string;
   description?: string;
   inputSchema?: unknown;
   outputSchema?: unknown;
 }
 
-interface ToolsetSchema {
+export interface ToolsetSchema {
   name: string;
   description?: string;
   tools: ToolSchema[];
 }
 
-async function getAllToolsetSchemas(): Promise<ToolsetSchema[]> {
-  const code = `import unreal;print(unreal.ToolsetRegistry.get_all_toolset_json_schemas())`;
+/**
+ * Returns all registered toolset schemas, or null if ToolsetRegistry is not available (UE < 5.8).
+ */
+export async function getAllToolsetSchemas(): Promise<ToolsetSchema[] | null> {
+  const code = `import unreal
+if hasattr(unreal, 'ToolsetRegistry'):
+    print(unreal.ToolsetRegistry.get_all_toolset_json_schemas())
+else:
+    print('null')`;
   const result = await runCommand(code);
-  return JSON.parse(result.output[0]?.output ?? '[]');
-}
-
-function shortToolName(fullName: string) {
-  const parts = fullName.split('.');
-  return parts[parts.length - 1];
-}
-
-export async function getToolsetSchema(toolsetName?: string, toolName?: string): Promise<string> {
-  const schemas = await getAllToolsetSchemas();
-
-  if (!toolsetName) {
-    // Level 1: list all toolsets
-    return JSON.stringify(schemas.map((ts) => ({ name: ts.name, description: ts.description ?? '' })));
-  }
-
-  const ts = schemas.find((s) => s.name === toolsetName);
-  if (!ts) {
-    return JSON.stringify({
-      error: 'Toolset not found',
-      available: schemas.map((s) => s.name),
-    });
-  }
-
-  if (!toolName) {
-    // Level 2: list tools in a toolset
-    return JSON.stringify({
-      name: ts.name,
-      description: ts.description ?? '',
-      tools: ts.tools.map((t) => ({
-        name: shortToolName(t.name),
-        description: (t.description ?? '').split('\n')[0].slice(0, 120),
-      })),
-    });
-  }
-
-  // Level 3: full schema for a single tool
-  const tool = ts.tools.find((t) => t.name === toolName || shortToolName(t.name) === toolName);
-  if (!tool) {
-    return JSON.stringify({
-      error: 'Tool not found',
-      available: ts.tools.map((t) => shortToolName(t.name)),
-    });
-  }
-
-  return JSON.stringify(tool);
+  return JSON.parse(result.output[0]?.output ?? 'null');
 }
 
 export async function executeTool(toolset: string, toolName: string, argsJson: string) {
   const code = `import unreal, json
-result, error = unreal.ToolsetRegistry.execute_tool(${JSON.stringify(toolset)}, ${JSON.stringify(toolName)}, ${JSON.stringify(argsJson)})
-print(json.dumps({'result': result, 'error': error}, ensure_ascii=False))`;
-  return await runCommand(code);
+if hasattr(unreal, 'ToolsetRegistry'):
+    result, error = unreal.ToolsetRegistry.execute_tool(${JSON.stringify(toolset)}, ${JSON.stringify(toolName)}, ${JSON.stringify(argsJson)})
+else:
+    result, error = None, 'ToolsetRegistry is not available in this version of Unreal Editor. Use run_python_code instead.'
+print(result)
+print(error)`;
+  const result = await runCommand(code);
+  return {
+    result: result.output[0]?.output ?? '',
+    error: result.output[1]?.output ?? '',
+  };
 }
 
 // #endregion

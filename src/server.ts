@@ -4,7 +4,9 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import * as z from 'zod/v4';
 import { CallToolResult, ReadResourceResult } from '@modelcontextprotocol/sdk/types';
-import { formatCommandResult, executeTool, getToolsetSchema, getUnrealPythonStub, runCommand, runFile } from '.';
+import { formatCommandResult, executeTool, getAllToolsetSchemas, getUnrealPythonStub, runCommand, runFile } from '.';
+
+const enableToolsetRegistry = process.env.UNREAL_ENABLE_TOOLSET_REGISTRY !== 'false';
 
 const server = new McpServer(
   {
@@ -13,7 +15,13 @@ const server = new McpServer(
     title: 'Unreal Python MCP Server',
   },
   {
-    instructions: 'Provides tools to execute Python script in Unreal Editor',
+    instructions: `Provides tools to execute Python script in Unreal Editor.
+
+Two ways to interact with the editor:
+1. ToolsetRegistry tools (preferred when available): Use get_toolset_schema to discover available tools, then execute_tool to call them. These are purpose-built, schema-validated editor operations covering 300+ tools (actors, Blueprints, materials, meshes, Niagara, UMG, etc.).
+2. Raw Python (fallback): Use run_python_code for custom logic or when no suitable tool exists. Access the Unreal API via 'import unreal'.
+
+Note: ToolsetRegistry requires Unreal Editor 5.8+. If get_toolset_schema returns an empty list, fall back to run_python_code.`,
   },
 );
 
@@ -21,11 +29,9 @@ server.registerTool(
   'run_python_code',
   {
     title: 'Run Python Code in Unreal Editor',
-    description: `Execute Python code within Unreal Editor. Tips:
-1. Access Unreal API via 'import unreal'
-2. Explore available API using Python's inspect module
-3. Use the 'unreal-python-stub' resource for text-based API discovery
-4. Use 'get_toolset_schema' and 'execute_tool' for ToolsetRegistry tools`,
+    description: `Execute Python code within Unreal Editor. Use this for custom logic when no ToolsetRegistry tool is available.
+- Access Unreal API via 'import unreal'
+- Use the 'unreal-python-stub' resource to get the path to the full API stub (unreal.py) for reference`,
     inputSchema: { code: z.string().describe('Python code to execute') },
   },
   async ({ code }): Promise<CallToolResult> => {
@@ -38,7 +44,8 @@ server.registerTool(
   'run_python_file',
   {
     title: 'Run Python Script File in Unreal Editor',
-    description: 'Execute Python script within Unreal Editor.',
+    description:
+      'Execute a Python script file within Unreal Editor. Use this instead of run_python_code when running an existing .py file on disk.',
     inputSchema: {
       path: z.string().describe('Absolute path to the script to execute'),
       args: z.array(z.string()).optional().describe('Optional command-line arguments to pass to the script'),
@@ -67,45 +74,90 @@ server.registerResource(
   },
 );
 
-server.registerTool(
-  'get_toolset_schema',
-  {
-    title: 'Get Toolset Schema',
-    description: `Look up registered toolsets and tools in Unreal Editor (ToolsetRegistry). Three levels of detail:
+if (enableToolsetRegistry) {
+  server.registerTool(
+    'get_toolset_schema',
+    {
+      title: 'Get Toolset Schema',
+      description: `Look up registered toolsets and tools in Unreal Editor. Three levels of detail:
 - No args: list all toolset names and descriptions
 - toolset only: list all tool names and descriptions in that toolset
-- toolset + tool_name: get full input/output schema for that tool`,
-    inputSchema: {
-      toolset: z
-        .string()
-        .optional()
-        .describe('Toolset name, e.g. "ECABridge" or "toolset_registry.toolsets.core.static_mesh.StaticMeshTools"'),
-      tool_name: z.string().optional().describe('Tool name, e.g. "get_level_info", "get_lod_count"'),
-    },
-  },
-  async ({ toolset, tool_name }): Promise<CallToolResult> => {
-    const text = await getToolsetSchema(toolset, tool_name);
-    return { content: [{ type: 'text', text }] };
-  },
-);
+- toolset + tool_name: get full input/output schema for that tool
 
-server.registerTool(
-  'execute_tool',
-  {
-    title: 'Execute Unreal Editor Tool',
-    description:
-      'Execute a tool registered in Unreal Editor via ToolsetRegistry. Use the get_toolset_schema tool to discover available tools and their schemas.',
-    inputSchema: {
-      toolset: z.string().describe('Toolset name, e.g. "ECABridge" or "toolset_registry.toolsets.core.static_mesh.StaticMeshTools"'),
-      tool_name: z.string().describe('Tool name (e.g. "get_level_info", "get_lod_count")'),
-      args: z.string().default('{}').describe('Tool arguments as JSON string'),
+Always check the schema before calling execute_tool — it tells you exactly what arguments are required.`,
+      inputSchema: {
+        toolset: z.string().optional().describe('Toolset name, e.g. "toolset_registry.toolsets.core.static_mesh.StaticMeshTools"'),
+        tool_name: z.string().optional().describe('Tool name, e.g. "get_level_info", "get_lod_count"'),
+      },
     },
-  },
-  async ({ toolset, tool_name, args }): Promise<CallToolResult> => {
-    const result = await executeTool(toolset, tool_name, args);
-    return { content: [{ type: 'text', text: formatCommandResult(result) }] };
-  },
-);
+    async ({ toolset, tool_name }): Promise<CallToolResult> => {
+      const schemas = await getAllToolsetSchemas();
+      if (schemas === null) {
+        return {
+          content: [
+            { type: 'text', text: 'ToolsetRegistry is not available in this version of Unreal Editor. Use run_python_code instead.' },
+          ],
+          isError: true,
+        };
+      }
+
+      if (!toolset) {
+        // Level 1: list all toolsets
+        const text = JSON.stringify(schemas.map((ts) => ({ name: ts.name, description: ts.description ?? '' })));
+        return { content: [{ type: 'text', text }] };
+      }
+
+      const ts = schemas.find((s) => s.name === toolset);
+      if (!ts) {
+        return { content: [{ type: 'text', text: JSON.stringify({ error: 'Toolset not found', available: schemas.map((s) => s.name) }) }] };
+      }
+
+      if (!tool_name) {
+        // Level 2: list tools in a toolset
+        const shortName = (name: string) => (name.includes('.') ? name.split('.').pop() : name);
+        const text = JSON.stringify(
+          ts.tools.map((t) => ({
+            name: shortName(t.name),
+            description: (t.description ?? '').split('\n')[0].slice(0, 120),
+          })),
+        );
+        return { content: [{ type: 'text', text }] };
+      }
+
+      // Level 3: full schema for a single tool
+      const shortName = (name: string) => (name.includes('.') ? name.split('.').pop() : name);
+      const tool = ts.tools.find((t) => t.name === tool_name || shortName(t.name) === tool_name);
+      if (!tool) {
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ error: 'Tool not found', available: ts.tools.map((t) => shortName(t.name)) }) }],
+        };
+      }
+      return { content: [{ type: 'text', text: JSON.stringify(tool) }] };
+    },
+  );
+
+  server.registerTool(
+    'execute_tool',
+    {
+      title: 'Execute Unreal Editor Tool',
+      description: `Execute a tool registered in Unreal Editor via ToolsetRegistry. Use the get_toolset_schema tool to discover available tools and their schemas.
+
+tool_name should be the short name (e.g. "get_level_info", not the fully qualified "ECABridge.get_level_info"). Check the tool's inputSchema via get_toolset_schema before calling to ensure correct arguments.`,
+      inputSchema: {
+        toolset: z.string().describe('Toolset name, e.g. "ECABridge" or "toolset_registry.toolsets.core.static_mesh.StaticMeshTools"'),
+        tool_name: z.string().describe('Tool name (e.g. "get_level_info", "get_lod_count")'),
+        args: z.record(z.string(), z.unknown()).default({}).describe('Tool arguments as JSON object'),
+      },
+    },
+    async ({ toolset, tool_name, args }): Promise<CallToolResult> => {
+      const { result, error } = await executeTool(toolset, tool_name, JSON.stringify(args));
+      if (error) {
+        return { content: [{ type: 'text', text: error }], isError: true };
+      }
+      return { content: [{ type: 'text', text: result }] };
+    },
+  );
+}
 
 const transport = new StdioServerTransport();
 server.connect(transport);
