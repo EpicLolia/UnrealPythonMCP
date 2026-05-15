@@ -4,7 +4,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import * as z from 'zod/v4';
 import { CallToolResult, ReadResourceResult } from '@modelcontextprotocol/sdk/types';
-import { formatCommandResult, executeTool, getAllToolsetSchemas, getUnrealPythonStub, runCommand, runFile } from '.';
+import { formatCommandResult, executeTool, getAllToolsetSchemas, getUnrealPythonStub, runCommand, runFile, hasException } from '.';
 
 const enableToolsetRegistry = process.env.UNREAL_ENABLE_TOOLSET_REGISTRY !== 'false';
 
@@ -36,7 +36,7 @@ server.registerTool(
   },
   async ({ code }): Promise<CallToolResult> => {
     const result = await runCommand(code);
-    return { content: [{ type: 'text', text: formatCommandResult(result) }] };
+    return { content: [{ type: 'text', text: formatCommandResult(result) }], isError: hasException(result) };
   },
 );
 
@@ -53,7 +53,7 @@ server.registerTool(
   },
   async ({ path, args }): Promise<CallToolResult> => {
     const result = await runFile(path, args);
-    return { content: [{ type: 'text', text: formatCommandResult(result) }] };
+    return { content: [{ type: 'text', text: formatCommandResult(result) }], isError: hasException(result) };
   },
 );
 
@@ -125,10 +125,10 @@ Always check the schema before calling execute_tool — it tells you exactly wha
         const text = JSON.stringify({
           name: ts.name,
           description: ts.description ?? '',
-          tools: ts.tools.map((t) => ({
-            name: shortName(t.name),
-            description: (t.description ?? '').split('\n')[0].slice(0, 120),
-          })),
+          tools: ts.tools.map((t) => {
+            const desc = t.description ?? '';
+            return { name: shortName(t.name), description: desc.length > 120 ? desc.slice(0, 120) + '...' : desc };
+          }),
         });
         return { content: [{ type: 'text', text }] };
       }

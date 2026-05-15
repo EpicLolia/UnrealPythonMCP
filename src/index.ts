@@ -56,6 +56,10 @@ export function runCommand(code: string): Promise<IRemoteExecutionMessageCommand
   });
 }
 
+export function hasException(result: IRemoteExecutionMessageCommandOutputData) {
+  return result.result !== 'None';
+}
+
 export function formatCommandResult(result: IRemoteExecutionMessageCommandOutputData) {
   // logs
   const lines = result.output.map((item) => {
@@ -65,7 +69,7 @@ export function formatCommandResult(result: IRemoteExecutionMessageCommandOutput
     return line;
   });
   // exception traceback
-  if (result.result !== 'None') lines.push(result.result.replace(/\r\n|\r/g, '\n') + '\n');
+  if (hasException(result)) lines.push(result.result.replace(/\r\n|\r/g, '\n') + '\n');
   return lines.join('');
 }
 
@@ -78,7 +82,7 @@ export async function runFile(path: string, args?: string[]) {
 export async function getUnrealPythonStub(): Promise<string | null> {
   const code = `import unreal;print(f'{unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_intermediate_dir())}PythonStub/unreal.py')`;
   const result = await runCommand(code);
-  return result.output[0]?.output ?? null;
+  return result.output[0]?.output?.trim() ?? null;
 }
 
 // #region ToolsetRegistry
@@ -106,24 +110,22 @@ if hasattr(unreal, 'ToolsetRegistry'):
 else:
     print('null')`;
   const result = await runCommand(code);
-  return JSON.parse(result.output[0]?.output ?? 'null');
+  return JSON.parse(result.output[0]?.output?.trim() ?? 'null');
 }
 
 export async function executeTool(toolset: string, toolName: string, argsJson: string): Promise<{ result: string; error: string } | null> {
   const code = `import unreal, json
 if hasattr(unreal, 'ToolsetRegistry'):
     result, error = unreal.ToolsetRegistry.execute_tool(${JSON.stringify(toolset)}, ${JSON.stringify(toolName)}, ${JSON.stringify(argsJson)})
-    print(result)
-    print(error)
+    print(json.dumps({"__ok": True, "result": result, "error": error}))
 else:
-    print('null')`;
+    print('{"__ok": false}')`;
   const result = await runCommand(code);
-  const output = result.output[0]?.output;
-  if (output === 'null' || !output) return null;
-  return {
-    result: output,
-    error: result.output[1]?.output ?? '',
-  };
+  const output = result.output[0]?.output?.trim();
+  if (!output) return null;
+  const parsed = JSON.parse(output);
+  if (!parsed.__ok) return null;
+  return { result: parsed.result ?? '', error: parsed.error ?? '' };
 }
 
 // #endregion
