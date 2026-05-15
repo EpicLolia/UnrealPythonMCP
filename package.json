@@ -16,6 +16,14 @@
   ],
   "author": "loiafeng",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EpicLolia/UnrealPythonMCP.git"
+  },
+  "bugs": {
+    "url": "https://github.com/EpicLolia/UnrealPythonMCP/issues"
+  },
+  "homepage": "https://github.com/EpicLolia/UnrealPythonMCP#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
     "unreal-remote-execution": "^1.1.0",
