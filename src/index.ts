@@ -6,16 +6,49 @@ const bindAddress = process.env.UNREAL_BIND_ADDRESS || '127.0.0.1';
 
 const config = new RemoteExecutionConfig(1, [multicastGroup, multicastPort], bindAddress);
 
-export async function runCommand(code: string) {
-  const remoteExecution = new RemoteExecution(config);
-  remoteExecution.start();
+// Serial command queue with connection reuse
+interface QueueItem {
+  code: string;
+  resolve: (value: IRemoteExecutionMessageCommandOutputData) => void;
+  reject: (reason: unknown) => void;
+}
+const queue: QueueItem[] = [];
+let working = false;
+
+async function processQueue() {
+  if (working) return;
+  working = true;
+
+  const re = new RemoteExecution(config);
   try {
-    const node = await remoteExecution.getFirstRemoteNode(1000, 5000);
-    await remoteExecution.openCommandConnection(node);
-    return await remoteExecution.runCommand(code);
+    await re.start();
+    const node = await re.getFirstRemoteNode(1000, 5000);
+    await re.openCommandConnection(node);
+
+    while (queue.length > 0) {
+      const item = queue.shift();
+      if (!item) continue;
+      try {
+        const result = await re.runCommand(item.code);
+        item.resolve(result);
+      } catch (err) {
+        item.reject(err);
+      }
+    }
+  } catch (err) {
+    for (const item of queue) item.reject(err);
   } finally {
-    remoteExecution.stop();
+    re.stop();
+    queue.length = 0;
+    working = false;
   }
+}
+
+export function runCommand(code: string): Promise<IRemoteExecutionMessageCommandOutputData> {
+  return new Promise((resolve, reject) => {
+    queue.push({ code, resolve, reject });
+    processQueue();
+  });
 }
 
 export function formatCommandResult(result: IRemoteExecutionMessageCommandOutputData) {
