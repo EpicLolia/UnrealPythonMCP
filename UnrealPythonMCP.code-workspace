@@ -13,7 +13,7 @@
     },
 
     "editor.tabSize": 2,
-    "cSpell.words": ["toolsets"],
+    "cSpell.words": ["hasattr", "modelcontextprotocol", "toolsets"],
   },
   "tasks": {
     "version": "2.0.0",

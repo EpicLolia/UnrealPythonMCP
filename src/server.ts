@@ -10,7 +10,7 @@ const enableToolsetRegistry = process.env.UNREAL_ENABLE_TOOLSET_REGISTRY !== 'fa
 
 const server = new McpServer(
   {
-    version: '0.1.7',
+    version: '0.2.0',
     name: 'unreal-python-mcp',
     title: 'Unreal Python MCP Server',
   },
@@ -21,7 +21,7 @@ Two ways to interact with the editor:
 1. ToolsetRegistry tools (preferred when available): Use get_toolset_schema to discover available tools, then execute_tool to call them. These are purpose-built, schema-validated editor operations covering 300+ tools (actors, Blueprints, materials, meshes, Niagara, UMG, etc.).
 2. Raw Python (fallback): Use run_python_code for custom logic or when no suitable tool exists. Access the Unreal API via 'import unreal'.
 
-Note: ToolsetRegistry requires Unreal Editor 5.8+. If get_toolset_schema returns an empty list, fall back to run_python_code.`,
+Note: ToolsetRegistry requires Unreal Editor 5.8+ with the Toolset Registry plugin enabled. If get_toolset_schema returns an error, fall back to run_python_code.`,
   },
 );
 
@@ -68,6 +68,7 @@ server.registerResource(
   },
   async (): Promise<ReadResourceResult> => {
     const path = await getUnrealPythonStub();
+    if (!path) throw new Error('Failed to get Python stub path from Unreal Editor.');
     return {
       contents: [{ uri: 'unreal://python-stub', mimeType: 'text/plain', text: path }],
     };
@@ -79,7 +80,7 @@ if (enableToolsetRegistry) {
     'get_toolset_schema',
     {
       title: 'Get Toolset Schema',
-      description: `Look up registered toolsets and tools in Unreal Editor. Three levels of detail:
+      description: `Look up registered toolsets and tools in Unreal Editor. Requires UE 5.8+ with the Toolset Registry plugin enabled. Three levels of detail:
 - No args: list all toolset names and descriptions
 - toolset only: list all tool names and descriptions in that toolset
 - toolset + tool_name: get full input/output schema for that tool
@@ -95,13 +96,19 @@ Always check the schema before calling execute_tool — it tells you exactly wha
       if (schemas === null) {
         return {
           content: [
-            { type: 'text', text: 'ToolsetRegistry is not available in this version of Unreal Editor. Use run_python_code instead.' },
+            {
+              type: 'text',
+              text: 'ToolsetRegistry is not available. Requires UE 5.8+ with the Toolset Registry plugin enabled. Use run_python_code instead.',
+            },
           ],
           isError: true,
         };
       }
 
       if (!toolset) {
+        if (tool_name) {
+          return { content: [{ type: 'text', text: JSON.stringify({ error: 'toolset is required when tool_name is specified' }) }] };
+        }
         // Level 1: list all toolsets
         const text = JSON.stringify(schemas.map((ts) => ({ name: ts.name, description: ts.description ?? '' })));
         return { content: [{ type: 'text', text }] };
@@ -115,12 +122,14 @@ Always check the schema before calling execute_tool — it tells you exactly wha
       if (!tool_name) {
         // Level 2: list tools in a toolset
         const shortName = (name: string) => (name.includes('.') ? name.split('.').pop() : name);
-        const text = JSON.stringify(
-          ts.tools.map((t) => ({
+        const text = JSON.stringify({
+          name: ts.name,
+          description: ts.description ?? '',
+          tools: ts.tools.map((t) => ({
             name: shortName(t.name),
             description: (t.description ?? '').split('\n')[0].slice(0, 120),
           })),
-        );
+        });
         return { content: [{ type: 'text', text }] };
       }
 
@@ -146,15 +155,26 @@ tool_name should be the short name (e.g. "get_level_info", not the fully qualifi
       inputSchema: {
         toolset: z.string().describe('Toolset name, e.g. "ECABridge" or "toolset_registry.toolsets.core.static_mesh.StaticMeshTools"'),
         tool_name: z.string().describe('Tool name (e.g. "get_level_info", "get_lod_count")'),
-        args: z.record(z.string(), z.unknown()).default({}).describe('Tool arguments as JSON object'),
+        args: z.record(z.string(), z.unknown()).default({}).describe('Tool arguments as object'),
       },
     },
     async ({ toolset, tool_name, args }): Promise<CallToolResult> => {
-      const { result, error } = await executeTool(toolset, tool_name, JSON.stringify(args));
-      if (error) {
-        return { content: [{ type: 'text', text: error }], isError: true };
+      const result = await executeTool(toolset, tool_name, JSON.stringify(args));
+      if (result === null) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: 'ToolsetRegistry is not available. Requires UE 5.8+ with the Toolset Registry plugin enabled. Use run_python_code instead.',
+            },
+          ],
+          isError: true,
+        };
       }
-      return { content: [{ type: 'text', text: result }] };
+      if (result.error) {
+        return { content: [{ type: 'text', text: result.error }], isError: true };
+      }
+      return { content: [{ type: 'text', text: result.result }] };
     },
   );
 }

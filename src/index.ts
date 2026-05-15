@@ -75,12 +75,10 @@ export async function runFile(path: string, args?: string[]) {
   return await runCommand(cmd);
 }
 
-export async function getUnrealPythonStub() {
+export async function getUnrealPythonStub(): Promise<string | null> {
   const code = `import unreal;print(f'{unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_intermediate_dir())}PythonStub/unreal.py')`;
   const result = await runCommand(code);
-  const path = result.output[0]?.output;
-  if (!path) throw new Error('Failed to get Python stub path from Unreal Editor');
-  return path;
+  return result.output[0]?.output ?? null;
 }
 
 // #region ToolsetRegistry
@@ -111,17 +109,19 @@ else:
   return JSON.parse(result.output[0]?.output ?? 'null');
 }
 
-export async function executeTool(toolset: string, toolName: string, argsJson: string) {
+export async function executeTool(toolset: string, toolName: string, argsJson: string): Promise<{ result: string; error: string } | null> {
   const code = `import unreal, json
 if hasattr(unreal, 'ToolsetRegistry'):
     result, error = unreal.ToolsetRegistry.execute_tool(${JSON.stringify(toolset)}, ${JSON.stringify(toolName)}, ${JSON.stringify(argsJson)})
+    print(result)
+    print(error)
 else:
-    result, error = None, 'ToolsetRegistry is not available in this version of Unreal Editor. Use run_python_code instead.'
-print(result)
-print(error)`;
+    print('null')`;
   const result = await runCommand(code);
+  const output = result.output[0]?.output;
+  if (output === 'null' || !output) return null;
   return {
-    result: result.output[0]?.output ?? '',
+    result: output,
     error: result.output[1]?.output ?? '',
   };
 }
