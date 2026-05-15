@@ -1,7 +1,8 @@
 {
   "permissions": {
     "defaultMode": "acceptEdits",
-    "deny": ["Agent(Plan)", "Agent(Explore)"]
+    "deny": ["Agent(Plan)", "Agent(Explore)"],
+    "allow": ["Bash(npx tsc *)", "mcp__unreal-python-mcp"]
   },
   "enabledMcpjsonServers": ["unreal-python-mcp"],
   "enableAllProjectMcpServers": true,
