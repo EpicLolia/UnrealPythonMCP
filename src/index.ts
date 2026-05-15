@@ -18,31 +18,32 @@ export async function runCommand(code: string) {
   }
 }
 
-export async function runFile(path: string, args?: string[]) {
-  let cmd = path;
-  if (args && args.length > 0) cmd += ` ${args.join(' ')}`;
-  return await runCommand(cmd);
-}
-
-const GET_UNREAL_PYTHON_STUB = `import unreal;print(f'{unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_intermediate_dir())}PythonStub/unreal.py')`;
-
-export async function getUnrealPythonStub() {
-  const result = await runCommand(GET_UNREAL_PYTHON_STUB);
-  return result.output[0]?.output;
-}
-
-export function commandResultToJsonString(result: IRemoteExecutionMessageCommandOutputData) {
+export function formatCommandResult(result: IRemoteExecutionMessageCommandOutputData) {
+  // logs
   const lines = result.output.map((item) => {
     let line = item.type !== 'Info' ? `[${item.type}] ` : '';
     line += item.output.replace(/\r\n|\r/g, '\n');
     if (!line.endsWith('\n')) line += '\n';
     return line;
   });
+  // exception traceback
   if (result.result !== 'None') lines.push(result.result.replace(/\r\n|\r/g, '\n') + '\n');
   return lines.join('');
 }
 
-// --- ToolsetRegistry helpers ---
+export async function runFile(path: string, args?: string[]) {
+  let cmd = path;
+  if (args && args.length > 0) cmd += ` ${args.join(' ')}`;
+  return await runCommand(cmd);
+}
+
+export async function getUnrealPythonStub() {
+  const code = `import unreal;print(f'{unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_intermediate_dir())}PythonStub/unreal.py')`;
+  const result = await runCommand(code);
+  return result.output[0]?.output;
+}
+
+// #region ToolsetRegistry
 
 interface ToolSchema {
   name: string;
@@ -104,14 +105,15 @@ export async function getToolsetSchema(toolsetName?: string, toolName?: string):
       available: ts.tools.map((t) => shortToolName(t.name)),
     });
   }
+
   return JSON.stringify(tool);
 }
 
 export async function executeTool(toolset: string, toolName: string, argsJson: string) {
-  const code = `
-import unreal, json
+  const code = `import unreal, json
 result, error = unreal.ToolsetRegistry.execute_tool(${JSON.stringify(toolset)}, ${JSON.stringify(toolName)}, ${JSON.stringify(argsJson)})
-print(json.dumps({'result': result, 'error': error}, ensure_ascii=False))
-`.trim();
+print(json.dumps({'result': result, 'error': error}, ensure_ascii=False))`;
   return await runCommand(code);
 }
+
+// #endregion

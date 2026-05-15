@@ -4,7 +4,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import * as z from 'zod/v4';
 import { CallToolResult, ReadResourceResult } from '@modelcontextprotocol/sdk/types';
-import { commandResultToJsonString, executeTool, getToolsetSchema, getUnrealPythonStub, runCommand, runFile } from '.';
+import { formatCommandResult, executeTool, getToolsetSchema, getUnrealPythonStub, runCommand, runFile } from '.';
 
 const server = new McpServer(
   {
@@ -30,7 +30,7 @@ server.registerTool(
   },
   async ({ code }): Promise<CallToolResult> => {
     const result = await runCommand(code);
-    return { content: [{ type: 'text', text: commandResultToJsonString(result) }] };
+    return { content: [{ type: 'text', text: formatCommandResult(result) }] };
   },
 );
 
@@ -46,7 +46,7 @@ server.registerTool(
   },
   async ({ path, args }): Promise<CallToolResult> => {
     const result = await runFile(path, args);
-    return { content: [{ type: 'text', text: commandResultToJsonString(result) }] };
+    return { content: [{ type: 'text', text: formatCommandResult(result) }] };
   },
 );
 
@@ -103,7 +103,7 @@ server.registerTool(
   },
   async ({ toolset, tool_name, args }): Promise<CallToolResult> => {
     const result = await executeTool(toolset, tool_name, args);
-    return { content: [{ type: 'text', text: commandResultToJsonString(result) }] };
+    return { content: [{ type: 'text', text: formatCommandResult(result) }] };
   },
 );
 
