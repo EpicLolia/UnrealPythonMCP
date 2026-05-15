@@ -3,6 +3,7 @@ import { IRemoteExecutionMessageCommandOutputData, RemoteExecution, RemoteExecut
 const multicastGroup = process.env.UNREAL_MULTICAST_GROUP || '239.0.0.1';
 const multicastPort = parseInt(process.env.UNREAL_MULTICAST_PORT || '6766', 10);
 const bindAddress = process.env.UNREAL_BIND_ADDRESS || '127.0.0.1';
+const connectionIdleMs = parseInt(process.env.UNREAL_CONNECTION_IDLE_MS || '3000', 10);
 
 const config = new RemoteExecutionConfig(1, [multicastGroup, multicastPort], bindAddress);
 
@@ -33,6 +34,10 @@ async function processQueue() {
         item.resolve(result);
       } catch (err) {
         item.reject(err);
+      }
+      // Keep connection alive briefly for follow-up commands
+      if (queue.length === 0) {
+        await new Promise((r) => setTimeout(r, connectionIdleMs));
       }
     }
   } catch (err) {
