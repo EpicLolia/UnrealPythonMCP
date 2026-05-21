@@ -139,65 +139,270 @@ function getHtml(): string {
 <title>Unreal MCP Workbench</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #1e1e2e;
+    --bg-surface: #181825;
+    --bg-deep: #11111b;
+    --border: #313244;
+    --border-hover: #45475a;
+    --text: #cdd6f4;
+    --text-dim: #6c7086;
+    --text-faint: #585b70;
+    --accent: #cba6f7;
+    --green: #a6e3a1;
+    --red: #f38ba8;
+    --yellow: #f9e2af;
+    --mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #1e1e2e;
-    color: #cdd6f4;
+    background: var(--bg);
+    color: var(--text);
     height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
+
+  /* Header */
   header {
-    padding: 12px 20px;
-    background: #181825;
-    border-bottom: 1px solid #313244;
+    padding: 10px 20px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-shrink: 0;
   }
-  header h1 {
-    font-size: 16px;
-    font-weight: 600;
-    color: #cba6f7;
+  header h1 { font-size: 15px; font-weight: 600; color: var(--accent); }
+  header .status { font-size: 12px; color: var(--text-dim); }
+
+  /* Three-column layout */
+  .main-layout {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    overflow: hidden;
   }
-  header .actions {
+
+  /* Panels */
+  .panel-left {
+    border-right: 1px solid var(--border);
     display: flex;
-    gap: 8px;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .panel-right {
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 12px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-surface);
+    flex-shrink: 0;
+  }
+
+  /* History list */
+  .history-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px;
+  }
+  .history-item {
+    padding: 8px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 2px;
+    border: 1px solid transparent;
+    transition: background 0.1s;
+  }
+  .history-item:hover { background: var(--bg-surface); }
+  .history-item.active {
+    background: var(--bg-surface);
+    border-color: var(--accent);
+  }
+  .history-item-header {
+    display: flex;
     align-items: center;
+    gap: 6px;
+    margin-bottom: 3px;
   }
-  header .status {
-    font-size: 12px;
-    color: #6c7086;
+  .history-item-id { font-size: 11px; font-weight: 600; color: var(--text-dim); }
+  .history-item-meta { font-size: 10px; color: var(--text-faint); margin-left: auto; }
+  .history-item-code {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
   }
-  .editor-section {
-    padding: 16px 20px;
-    background: #1e1e2e;
-    border-bottom: 1px solid #313244;
+
+  /* Badges */
+  .badge {
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--bg);
   }
-  .editor-section textarea {
+  .badge-ok { background: var(--green); }
+  .badge-err { background: var(--red); }
+
+  /* Center panel */
+  .panel-center {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .editor-wrapper {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    min-height: 0;
+    position: relative;
+  }
+  .editor-wrapper textarea {
+    flex: 1;
     width: 100%;
-    min-height: 100px;
-    background: #11111b;
-    color: #cdd6f4;
-    border: 1px solid #313244;
+    background: var(--bg-deep);
+    color: var(--text);
+    border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 12px;
-    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    padding: 14px;
+    padding-bottom: 50px;
+    font-family: var(--mono);
     font-size: 13px;
-    line-height: 1.5;
-    resize: vertical;
+    line-height: 1.6;
+    resize: none;
     outline: none;
     tab-size: 4;
+    transition: border-color 0.2s;
   }
-  .editor-section textarea:focus {
-    border-color: #cba6f7;
+  .editor-wrapper textarea:focus { border-color: var(--accent); }
+  .editor-wrapper textarea.running {
+    border-color: var(--yellow);
+    animation: running-pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes running-pulse {
+    0%, 100% { border-color: var(--yellow); }
+    50% { border-color: var(--border); }
   }
   .editor-toolbar {
-    margin-top: 8px;
+    position: absolute;
+    bottom: 28px;
+    right: 28px;
     display: flex;
     gap: 8px;
     align-items: center;
   }
+
+  /* Output */
+  .output-wrapper {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    padding: 0 16px 16px 16px;
+    min-height: 0;
+  }
+  .output-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+  }
+  .output-content {
+    flex: 1;
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    overflow-y: auto;
+    color: var(--text);
+  }
+  .output-content.placeholder {
+    color: var(--text-faint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .output-content.error { border-color: var(--red); }
+  .output-content.success { border-color: var(--green); }
+
+  /* Config */
+  .config-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px;
+  }
+  .config-item {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 6px;
+  }
+  .config-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 8px;
+  }
+  .config-key {
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .config-input {
+    width: 100%;
+    padding: 5px 8px;
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .config-input:focus { border-color: var(--accent); }
+  .config-input:disabled {
+    color: var(--text);
+    cursor: default;
+    border-color: transparent;
+    background: transparent;
+  }
+  .config-input.saved {
+    border-color: var(--green);
+  }
+  .config-desc {
+    font-size: 10px;
+    color: var(--text-faint);
+    margin-top: 4px;
+  }
+
+  /* Buttons */
   button {
     padding: 6px 14px;
     border: none;
@@ -205,249 +410,92 @@ function getHtml(): string {
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: opacity 0.15s;
+    transition: opacity 0.1s;
   }
   button:hover { opacity: 0.85; }
   button:active { opacity: 0.7; }
-  .btn-primary { background: #cba6f7; color: #1e1e2e; }
-  .btn-secondary { background: #313244; color: #cdd6f4; }
-  .btn-small {
-    padding: 3px 8px;
-    font-size: 11px;
-    border-radius: 3px;
-  }
-  .history-section {
-    flex: 1;
-    overflow-y: auto;
-    padding: 12px 20px;
-  }
-  .history-section h2 {
-    font-size: 13px;
-    font-weight: 600;
-    color: #6c7086;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 10px;
-  }
-  .record {
-    background: #181825;
-    border: 1px solid #313244;
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-run {
+    background: var(--accent);
+    color: var(--bg);
+    padding: 8px 20px;
     border-radius: 6px;
-    padding: 12px;
-    margin-bottom: 8px;
-    transition: border-color 0.15s;
+    font-weight: 600;
   }
-  .record:hover { border-color: #45475a; }
-  .record-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
+  .btn-clear {
+    background: var(--border);
+    color: var(--text-dim);
+    padding: 8px 14px;
+    border-radius: 6px;
     font-size: 12px;
   }
-  .record-id { color: #6c7086; font-weight: 600; }
-  .record-time { color: #6c7086; }
-  .record-duration { color: #6c7086; margin-left: auto; }
-  .badge-success { background: #a6e3a1; color: #1e1e2e; padding: 1px 6px; border-radius: 3px; font-size: 11px; font-weight: 600; }
-  .badge-error { background: #f38ba8; color: #1e1e2e; padding: 1px 6px; border-radius: 3px; font-size: 11px; font-weight: 600; }
-  .record-code {
-    background: #11111b;
-    border-radius: 4px;
-    padding: 8px 10px;
-    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-    font-size: 12px;
-    line-height: 1.4;
-    white-space: pre-wrap;
-    word-break: break-all;
-    max-height: 120px;
-    overflow-y: auto;
-    color: #a6adc8;
-  }
-  .record-output {
-    margin-top: 6px;
-    background: #11111b;
-    border-radius: 4px;
-    padding: 8px 10px;
-    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-    font-size: 11px;
-    line-height: 1.4;
-    white-space: pre-wrap;
-    word-break: break-all;
-    max-height: 80px;
-    overflow-y: auto;
-    color: #6c7086;
-    display: none;
-  }
-  .record-output.visible { display: block; }
-  .record-actions {
-    margin-top: 8px;
-    display: flex;
-    gap: 6px;
-  }
+
+  /* Empty state */
   .empty-state {
     text-align: center;
-    padding: 60px 20px;
-    color: #6c7086;
-  }
-  .empty-state p { font-size: 14px; }
-  .running-indicator {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #f9e2af;
-    animation: pulse 1s infinite;
-    margin-right: 6px;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
-  /* Tabs */
-  .tabs {
-    display: flex;
-    gap: 0;
-    background: #181825;
-    border-bottom: 1px solid #313244;
-  }
-  .tab {
-    padding: 10px 20px;
+    padding: 40px 16px;
+    color: var(--text-faint);
     font-size: 13px;
-    font-weight: 500;
-    color: #6c7086;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: color 0.15s, border-color 0.15s;
   }
-  .tab:hover { color: #cdd6f4; }
-  .tab.active { color: #cba6f7; border-bottom-color: #cba6f7; }
-  .tab-content { display: none; flex: 1; overflow-y: auto; }
-  .tab-content.active { display: flex; flex-direction: column; }
-  /* Config panel */
-  .config-section {
-    padding: 16px 20px;
-  }
-  .config-item {
-    background: #181825;
-    border: 1px solid #313244;
-    border-radius: 6px;
-    padding: 12px;
-    margin-bottom: 8px;
-  }
-  .config-item.readonly { opacity: 0.6; }
-  .config-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
-  }
-  .config-key {
-    font-weight: 600;
-    font-size: 13px;
-    color: #cdd6f4;
-  }
-  .config-env {
-    font-size: 11px;
-    color: #6c7086;
-    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-  }
-  .config-badge-mutable {
-    font-size: 10px;
-    padding: 1px 5px;
-    border-radius: 3px;
-    background: #a6e3a1;
-    color: #1e1e2e;
-    font-weight: 600;
-  }
-  .config-badge-readonly {
-    font-size: 10px;
-    padding: 1px 5px;
-    border-radius: 3px;
-    background: #45475a;
-    color: #a6adc8;
-    font-weight: 600;
-  }
-  .config-desc {
-    font-size: 12px;
-    color: #6c7086;
-    margin-bottom: 8px;
-  }
-  .config-input-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-  .config-input {
-    flex: 1;
-    padding: 6px 10px;
-    background: #11111b;
-    border: 1px solid #313244;
-    border-radius: 4px;
-    color: #cdd6f4;
-    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-    font-size: 13px;
-    outline: none;
-  }
-  .config-input:focus { border-color: #cba6f7; }
-  .config-input:disabled { color: #6c7086; cursor: not-allowed; }
-  .config-default {
-    font-size: 11px;
-    color: #6c7086;
-    margin-top: 4px;
-  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
 </style>
 </head>
 <body>
 <header>
   <h1>Unreal MCP Workbench</h1>
-  <div class="actions">
-    <span class="status" id="status">Ready</span>
-    <button class="btn-secondary btn-small" onclick="refreshHistory()">Refresh</button>
-  </div>
+  <span class="status" id="status">Ready</span>
 </header>
 
-<div class="tabs">
-  <div class="tab active" onclick="switchTab('commands')">Commands</div>
-  <div class="tab" onclick="switchTab('config')">Config</div>
-</div>
-
-<div class="tab-content active" id="tab-commands">
-  <div class="editor-section">
-    <textarea id="editor" placeholder="Enter Python code to execute in Unreal Editor..." spellcheck="false"></textarea>
-    <div class="editor-toolbar">
-      <button class="btn-primary" onclick="runCode()" id="runBtn">Run</button>
-      <button class="btn-secondary" onclick="clearEditor()">Clear</button>
+<div class="main-layout">
+  <div class="panel-left">
+    <div class="panel-header">History</div>
+    <div class="history-list" id="history-list">
+      <div class="empty-state">No commands yet</div>
     </div>
   </div>
 
-  <div class="history-section">
-    <h2>Command History</h2>
-    <div id="history-list">
-      <div class="empty-state"><p>No commands executed yet.</p></div>
+  <div class="panel-center">
+    <div class="editor-wrapper">
+      <textarea id="editor" placeholder="Enter Python code...&#10;&#10;Ctrl+Enter to run" spellcheck="false"></textarea>
+      <div class="editor-toolbar">
+        <button class="btn-clear" onclick="clearEditor()">Clear</button>
+        <button class="btn-run" id="runBtn" onclick="runCode()">Run</button>
+      </div>
+    </div>
+    <div class="output-wrapper">
+      <div class="output-label">Output</div>
+      <div class="output-content placeholder" id="output">Run code to see output</div>
     </div>
   </div>
-</div>
 
-<div class="tab-content" id="tab-config">
-  <div class="config-section" id="config-list"></div>
+  <div class="panel-right">
+    <div class="panel-header">Config</div>
+    <div class="config-list" id="config-list"></div>
+  </div>
 </div>
 
 <script>
 const editor = document.getElementById('editor');
+const output = document.getElementById('output');
 const historyList = document.getElementById('history-list');
-const status = document.getElementById('status');
+const statusEl = document.getElementById('status');
 const runBtn = document.getElementById('runBtn');
 
-let autoRefreshTimer = null;
+// Store history records for safe lookup (avoids XSS from inline JSON)
+let historyRecords = [];
+let activeHistoryId = null;
 
-// Handle Tab key in textarea
 editor.addEventListener('keydown', (e) => {
   if (e.key === 'Tab') {
     e.preventDefault();
-    const start = editor.selectionStart;
-    const end = editor.selectionEnd;
-    editor.value = editor.value.substring(0, start) + '    ' + editor.value.substring(end);
-    editor.selectionStart = editor.selectionEnd = start + 4;
+    const s = editor.selectionStart, end = editor.selectionEnd;
+    editor.value = editor.value.substring(0, s) + '    ' + editor.value.substring(end);
+    editor.selectionStart = editor.selectionEnd = s + 4;
   }
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
     e.preventDefault();
@@ -460,7 +508,10 @@ async function runCode() {
   if (!code) return;
 
   runBtn.disabled = true;
-  status.innerHTML = '<span class="running-indicator"></span>Running...';
+  editor.classList.add('running');
+  statusEl.textContent = 'Running...';
+  output.className = 'output-content placeholder';
+  output.textContent = 'Executing...';
 
   try {
     const res = await fetch('/api/run', {
@@ -469,12 +520,17 @@ async function runCode() {
       body: JSON.stringify({ code }),
     });
     const data = await res.json();
-    status.textContent = data.success ? 'Completed successfully' : 'Completed with error';
+    output.textContent = data.output || '(no output)';
+    output.className = 'output-content ' + (data.success ? 'success' : 'error');
+    statusEl.textContent = data.success ? 'Done' : 'Error';
     refreshHistory();
   } catch (err) {
-    status.textContent = 'Error: ' + err.message;
+    output.textContent = 'Request failed: ' + err.message;
+    output.className = 'output-content error';
+    statusEl.textContent = 'Error';
   } finally {
     runBtn.disabled = false;
+    editor.classList.remove('running');
   }
 }
 
@@ -483,150 +539,149 @@ function clearEditor() {
   editor.focus();
 }
 
-function loadToEditor(code) {
-  editor.value = code;
-  editor.focus();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function copyCode(code) {
-  navigator.clipboard.writeText(code).then(() => {
-    const prev = status.textContent;
-    status.textContent = 'Copied!';
-    setTimeout(() => { status.textContent = prev; }, 1500);
-  });
-}
-
-function toggleOutput(id) {
-  const el = document.getElementById('output-' + id);
-  if (el) el.classList.toggle('visible');
+function selectHistoryItem(id) {
+  const record = historyRecords.find(r => r.id === id);
+  if (!record) return;
+  activeHistoryId = id;
+  editor.value = record.code;
+  output.textContent = record.output || '(no output)';
+  output.className = 'output-content ' + (record.success ? 'success' : 'error');
+  document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById('hist-' + id);
+  if (el) el.classList.add('active');
 }
 
 function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
+  const d = document.createElement('div');
+  d.textContent = text;
+  return d.innerHTML;
 }
 
-function formatTime(isoStr) {
-  const d = new Date(isoStr);
-  return d.toLocaleTimeString();
+function formatTime(iso) {
+  return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function codePreview(code) {
+  const line = code.split('\\n')[0];
+  return line.length > 50 ? line.slice(0, 50) + '...' : line;
 }
 
 async function refreshHistory() {
   try {
     const res = await fetch('/api/history');
-    const records = await res.json();
-    renderHistory(records);
-  } catch (err) {
-    // silent fail on refresh
-  }
+    historyRecords = await res.json();
+    renderHistory();
+  } catch (e) { /* silent */ }
 }
 
-function renderHistory(records) {
-  if (records.length === 0) {
-    historyList.innerHTML = '<div class="empty-state"><p>No commands executed yet.</p></div>';
+function renderHistory() {
+  if (historyRecords.length === 0) {
+    historyList.innerHTML = '<div class="empty-state">No commands yet</div>';
     return;
   }
-
-  // Show newest first
-  const sorted = [...records].reverse();
+  const sorted = [...historyRecords].reverse();
   historyList.innerHTML = sorted.map(r => {
     const badge = r.success
-      ? '<span class="badge-success">OK</span>'
-      : '<span class="badge-error">ERR</span>';
-    const codePreview = r.code.length > 500 ? r.code.slice(0, 500) + '...' : r.code;
-    const hasOutput = r.output && r.output.trim().length > 0;
-
-    return \`<div class="record">
-      <div class="record-header">
-        <span class="record-id">#\${r.id}</span>
+      ? '<span class="badge badge-ok">OK</span>'
+      : '<span class="badge badge-err">ERR</span>';
+    const active = r.id === activeHistoryId ? ' active' : '';
+    const meta = formatTime(r.timestamp) + (r.duration != null ? ' · ' + r.duration + 'ms' : '');
+    return \`<div class="history-item\${active}" id="hist-\${r.id}" onclick="selectHistoryItem(\${r.id})" tabindex="0" role="button">
+      <div class="history-item-header">
+        <span class="history-item-id">#\${r.id}</span>
         \${badge}
-        <span class="record-time">\${formatTime(r.timestamp)}</span>
-        <span class="record-duration">\${r.duration}ms</span>
+        <span class="history-item-meta">\${meta}</span>
       </div>
-      <div class="record-code">\${escapeHtml(codePreview)}</div>
-      \${hasOutput ? \`<div class="record-output" id="output-\${r.id}">\${escapeHtml(r.output)}</div>\` : ''}
-      <div class="record-actions">
-        <button class="btn-primary btn-small" onclick="loadToEditor(\${JSON.stringify(JSON.stringify(r.code))})">Edit</button>
-        <button class="btn-secondary btn-small" onclick="copyCode(\${JSON.stringify(JSON.stringify(r.code))})">Copy</button>
-        \${hasOutput ? \`<button class="btn-secondary btn-small" onclick="toggleOutput(\${r.id})">Output</button>\` : ''}
-      </div>
+      <div class="history-item-code">\${escapeHtml(codePreview(r.code))}</div>
     </div>\`;
   }).join('');
 }
 
-// Auto-refresh every 2 seconds
-function startAutoRefresh() {
-  autoRefreshTimer = setInterval(refreshHistory, 2000);
-}
-
-// Tab switching
-function switchTab(tab) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelector(\`.tab-content#tab-\${tab}\`).classList.add('active');
-  event.target.classList.add('active');
-  if (tab === 'config') refreshConfig();
-}
-
-// Config panel
+// Config
 async function refreshConfig() {
   try {
     const res = await fetch('/api/config');
-    const items = await res.json();
-    renderConfig(items);
-  } catch (err) {
-    // silent
-  }
+    renderConfig(await res.json());
+  } catch (e) { /* silent */ }
 }
 
 function renderConfig(items) {
-  const configList = document.getElementById('config-list');
-  configList.innerHTML = items.map(item => {
-    const badge = item.mutable
-      ? '<span class="config-badge-mutable">MUTABLE</span>'
-      : '<span class="config-badge-readonly">READONLY</span>';
-    return \`<div class="config-item \${item.mutable ? '' : 'readonly'}">
-      <div class="config-header">
-        <span class="config-key">\${item.key}</span>
-        \${badge}
+  const list = document.getElementById('config-list');
+  list.innerHTML = items.map(item => {
+    const placeholder = item.mutable ? String(item.defaultValue) : '';
+    return \`<div class="config-item">
+      <div class="config-row">
+        <span class="config-key">\${escapeHtml(item.key)}</span>
+        <input class="config-input" id="cfg-\${item.key}"
+          value="\${escapeHtml(String(item.value))}"
+          placeholder="\${escapeHtml(placeholder)}"
+          \${item.mutable ? 'data-mutable="1"' : 'disabled'} />
       </div>
       <div class="config-desc">\${escapeHtml(item.description)}</div>
-      <div class="config-env">\${item.env}</div>
-      <div class="config-input-row">
-        <input class="config-input" id="config-\${item.key}" value="\${escapeHtml(String(item.value))}" \${item.mutable ? '' : 'disabled'} />
-        \${item.mutable ? \`<button class="btn-primary btn-small" onclick="saveConfig('\${item.key}')">Save</button>\` : ''}
-      </div>
-      <div class="config-default">Default: \${escapeHtml(String(item.defaultValue))}</div>
     </div>\`;
   }).join('');
+
+  // Attach auto-save on blur or Enter for mutable inputs
+  list.querySelectorAll('input[data-mutable]').forEach(input => {
+    const original = input.value;
+    input.addEventListener('blur', () => {
+      if (input.value !== original) {
+        const key = input.id.replace('cfg-', '');
+        saveConfig(key, input);
+      }
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        input.blur();
+      }
+    });
+  });
 }
 
-async function saveConfig(key) {
-  const input = document.getElementById('config-' + key);
-  const value = input.value;
+async function saveConfig(key, input) {
   try {
     const res = await fetch('/api/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key, value }),
+      body: JSON.stringify({ key, value: input.value }),
     });
     const data = await res.json();
     if (data.error) {
-      status.textContent = 'Error: ' + data.error;
+      statusEl.textContent = 'Error: ' + data.error;
+      setTimeout(() => { statusEl.textContent = 'Ready'; }, 3000);
     } else {
-      status.textContent = key + ' updated';
-      setTimeout(() => { status.textContent = 'Ready'; }, 2000);
+      input.classList.add('saved');
+      setTimeout(() => { input.classList.remove('saved'); }, 1500);
     }
   } catch (err) {
-    status.textContent = 'Error: ' + err.message;
+    statusEl.textContent = 'Error: ' + err.message;
+    setTimeout(() => { statusEl.textContent = 'Ready'; }, 3000);
   }
 }
 
-// Initial load
+// Polling with visibility check
+let pollTimer = null;
+function startPolling() {
+  pollTimer = setInterval(() => {
+    if (!document.hidden) refreshHistory();
+  }, 3000);
+}
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) refreshHistory();
+});
+
+// Keyboard support for history items
+historyList.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    const item = e.target.closest('.history-item');
+    if (item) { e.preventDefault(); item.click(); }
+  }
+});
+
+// Init
 refreshHistory();
-startAutoRefresh();
+refreshConfig();
+startPolling();
 </script>
 </body>
 </html>`;

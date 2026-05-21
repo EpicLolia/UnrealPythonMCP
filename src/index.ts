@@ -76,6 +76,23 @@ async function processQueue() {
   }
 }
 
+// Prevent unhandled socket 'error' events from crashing the process.
+// The unreal-remote-execution library does not attach error listeners to its
+// UDP broadcast socket, so invalid config values (e.g. bad bind address) cause
+// an unhandled 'error' event that would otherwise terminate Node.js.
+process.on('uncaughtException', (err) => {
+  process.stderr.write(`[unreal-mcp] Uncaught exception (recovered): ${err.message}\n`);
+  for (const item of queue) item.reject(err);
+  queue.length = 0;
+  working = false;
+});
+process.on('unhandledRejection', (reason) => {
+  process.stderr.write(`[unreal-mcp] Unhandled rejection (recovered): ${reason}\n`);
+  for (const item of queue) item.reject(reason);
+  queue.length = 0;
+  working = false;
+});
+
 export function runCommand(code: string): Promise<IRemoteExecutionMessageCommandOutputData> {
   return new Promise((resolve, reject) => {
     queue.push({ code, resolve, reject });
