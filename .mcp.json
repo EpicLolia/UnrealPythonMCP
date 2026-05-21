@@ -2,7 +2,10 @@
   "mcpServers": {
     "unreal-python-mcp": {
       "command": "node",
-      "args": ["./dist/server.js"]
+      "args": ["./dist/server.js"],
+      "env": {
+        "UNREAL_MCP_WORKBENCH": "true"
+      }
     }
   }
 }

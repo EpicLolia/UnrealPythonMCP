@@ -34,7 +34,7 @@ export const config = {
   workbenchEnabled: {
     env: 'UNREAL_MCP_WORKBENCH',
     description: 'Enable the Workbench HTTP server',
-    defaultValue: true,
+    defaultValue: false,
     mutable: false,
   },
   workbenchPort: {
