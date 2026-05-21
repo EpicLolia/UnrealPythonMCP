@@ -1,11 +1,35 @@
 import { IRemoteExecutionMessageCommandOutputData, RemoteExecution, RemoteExecutionConfig } from 'unreal-remote-execution';
+import { get } from './config';
 
-const multicastGroup = process.env.UNREAL_MULTICAST_GROUP || '239.0.0.1';
-const multicastPort = parseInt(process.env.UNREAL_MULTICAST_PORT || '6766', 10);
-const bindAddress = process.env.UNREAL_BIND_ADDRESS || '127.0.0.1';
-const connectionIdleMs = parseInt(process.env.UNREAL_CONNECTION_IDLE_MS || '3000', 10);
+// Command history for workbench
+export interface CommandRecord {
+  id: number;
+  timestamp: string;
+  code: string;
+  success: boolean;
+  output: string;
+  duration: number; // ms
+}
 
-const config = new RemoteExecutionConfig(1, [multicastGroup, multicastPort], bindAddress);
+export const commandHistory: CommandRecord[] = [];
+let nextRecordId = 1;
+
+function recordCommand(code: string, result: IRemoteExecutionMessageCommandOutputData, duration: number) {
+  const maxOutputLength = get('maxOutputLength');
+  const maxHistory = get('maxHistory');
+  const output = formatCommandResult(result);
+  commandHistory.push({
+    id: nextRecordId++,
+    timestamp: new Date().toISOString(),
+    code,
+    success: !hasException(result),
+    output: output.length > maxOutputLength ? output.slice(0, maxOutputLength) + '...' : output,
+    duration,
+  });
+  if (commandHistory.length > maxHistory) {
+    commandHistory.shift();
+  }
+}
 
 // Serial command queue with connection reuse
 interface QueueItem {
@@ -20,7 +44,8 @@ async function processQueue() {
   if (working) return;
   working = true;
 
-  const re = new RemoteExecution(config);
+  const remoteConfig = new RemoteExecutionConfig(1, [get('multicastGroup'), get('multicastPort')], get('bindAddress'));
+  const re = new RemoteExecution(remoteConfig);
   try {
     await re.start();
     const node = await re.getFirstRemoteNode(1000, 5000);
@@ -29,15 +54,17 @@ async function processQueue() {
     while (queue.length > 0) {
       const item = queue.shift();
       if (!item) continue;
+      const startTime = Date.now();
       try {
         const result = await re.runCommand(item.code);
+        recordCommand(item.code, result, Date.now() - startTime);
         item.resolve(result);
       } catch (err) {
         item.reject(err);
       }
       // Keep connection alive briefly for follow-up commands
       if (queue.length === 0) {
-        await new Promise((r) => setTimeout(r, connectionIdleMs));
+        await new Promise((r) => setTimeout(r, get('connectionIdleMs')));
       }
     }
   } catch (err) {

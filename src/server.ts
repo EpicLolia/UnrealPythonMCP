@@ -5,8 +5,10 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import * as z from 'zod/v4';
 import { CallToolResult, ReadResourceResult } from '@modelcontextprotocol/sdk/types';
 import { formatCommandResult, executeTool, getAllToolsetSchemas, getUnrealPythonStub, runCommand, runFile, hasException } from '.';
+import { get } from './config';
+import { startWorkbench } from './workbench';
 
-const enableToolsetRegistry = process.env.UNREAL_ENABLE_TOOLSET_REGISTRY !== 'false';
+const enableToolsetRegistry = get('enableToolsetRegistry');
 
 const server = new McpServer(
   {
@@ -177,6 +179,11 @@ tool_name should be the short name (e.g. "get_level_info", not the fully qualifi
       return { content: [{ type: 'text', text: result.result }] };
     },
   );
+}
+
+// Start Workbench HTTP server if enabled
+if (get('workbenchEnabled')) {
+  startWorkbench();
 }
 
 const transport = new StdioServerTransport();
