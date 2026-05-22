@@ -9,6 +9,7 @@
 import { defineConfig } from 'eslint/config';
 import js from '@eslint/js';
 import json from '@eslint/json';
+import html from '@html-eslint/eslint-plugin';
 import tseslint from 'typescript-eslint';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 
@@ -34,6 +35,16 @@ export default defineConfig([
       '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/no-unsafe-declaration-merging': 'off',
       '@typescript-eslint/no-unsafe-function-type': 'off',
+    },
+  },
+
+  {
+    files: ['**/*.html'],
+    plugins: { html },
+    extends: ['html/recommended'],
+    language: 'html/html',
+    rules: {
+      'html/indent': ['error', 2],
     },
   },
 
