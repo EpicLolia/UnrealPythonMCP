@@ -39,8 +39,10 @@ interface QueueItem {
 }
 const queue: QueueItem[] = [];
 let working = false;
+let wakeUp: (() => void) | null = null;
 
 async function processQueue() {
+  if (wakeUp) wakeUp();
   if (working) return;
   working = true;
 
@@ -62,9 +64,19 @@ async function processQueue() {
       } catch (err) {
         item.reject(err);
       }
-      // Keep connection alive briefly for follow-up commands
+      // Keep connection alive briefly, wake immediately if new command arrives
       if (queue.length === 0) {
-        await new Promise((r) => setTimeout(r, get('connectionIdleMs')));
+        await new Promise<void>((resolve) => {
+          const timer = setTimeout(() => {
+            wakeUp = null;
+            resolve();
+          }, get('connectionIdleMs'));
+          wakeUp = () => {
+            clearTimeout(timer);
+            wakeUp = null;
+            resolve();
+          };
+        });
       }
     }
   } catch (err) {
