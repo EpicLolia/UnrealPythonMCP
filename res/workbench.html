@@ -17,9 +17,9 @@
         --border: #313244;
         --border-hover: #45475a;
         --text: #cdd6f4;
-        --text-dim: #6c7086;
-        --text-faint: #585b70;
-        --accent: #cba6f7;
+        --text-dim: #9399b2;
+        --text-faint: #7f849c;
+        --accent: #89b4fa;
         --green: #a6e3a1;
         --red: #f38ba8;
         --yellow: #f9e2af;
@@ -54,30 +54,41 @@
         font-size: 12px;
         color: var(--text-dim);
       }
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
 
       /* Three-column layout */
       .main-layout {
         flex: 1;
         display: grid;
-        grid-template-columns: 1fr 2fr 1fr;
+        grid-template-columns: 2fr 1fr 3fr;
         overflow: hidden;
+      }
+      .main-layout.config-hidden {
+        grid-template-columns: 1fr 3fr;
       }
 
       /* Panels */
+      .panel-config {
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .panel-config.collapsed {
+        display: none;
+      }
       .panel-left {
         border-right: 1px solid var(--border);
         display: flex;
         flex-direction: column;
         overflow: hidden;
       }
-      .panel-right {
-        border-left: 1px solid var(--border);
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-      }
       .panel-header {
-        padding: 12px 16px;
+        padding: 8px 12px;
         font-size: 11px;
         font-weight: 600;
         color: var(--text-dim);
@@ -86,6 +97,27 @@
         border-bottom: 1px solid var(--border);
         background: var(--bg-surface);
         flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .toggle-btn {
+        background: none;
+        border: none;
+        color: var(--text-dim);
+        font-size: 14px;
+        cursor: pointer;
+        padding: 2px 6px;
+        border-radius: 3px;
+        line-height: 1;
+      }
+      .toggle-btn:hover {
+        background: var(--border);
+        color: var(--text);
+      }
+      .toggle-btn.active {
+        background: var(--accent);
+        color: var(--bg);
       }
 
       /* History list */
@@ -109,11 +141,17 @@
         background: var(--bg-surface);
         border-color: var(--accent);
       }
+      .history-item.duplicate {
+        padding: 4px 10px 4px 18px;
+        margin-bottom: 0;
+        border-left: 2px solid var(--border);
+        border-radius: 0 4px 4px 0;
+        margin-left: 6px;
+      }
       .history-item-header {
         display: flex;
         align-items: center;
         gap: 6px;
-        margin-bottom: 3px;
       }
       .history-item-id {
         font-size: 11px;
@@ -124,15 +162,6 @@
         font-size: 10px;
         color: var(--text-faint);
         margin-left: auto;
-      }
-      .history-item-code {
-        font-family: var(--mono);
-        font-size: 11px;
-        color: var(--text-faint);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        line-height: 1.3;
       }
 
       /* Badges */
@@ -232,9 +261,8 @@
         font-family: var(--mono);
         font-size: 12px;
         line-height: 1.5;
-        white-space: pre-wrap;
-        overflow-wrap: break-word;
-        overflow-y: auto;
+        white-space: pre;
+        overflow: auto;
         color: var(--text);
       }
       .output-content.placeholder {
@@ -242,6 +270,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        white-space: normal;
       }
       .output-content.error {
         border-color: var(--red);
@@ -353,6 +382,7 @@
       /* Scrollbar */
       ::-webkit-scrollbar {
         width: 6px;
+        height: 6px;
       }
       ::-webkit-scrollbar-track {
         background: transparent;
@@ -368,11 +398,19 @@
   </head>
   <body>
     <header>
-      <h1>Unreal Python MCP Workbench</h1>
+      <div class="header-actions">
+        <button class="toggle-btn" id="toggle-config-btn" onclick="toggleConfig()" title="Toggle Config panel">&#9776;</button>
+        <h1>Unreal Python MCP Workbench</h1>
+      </div>
       <span class="status" id="status">Ready</span>
     </header>
 
-    <div class="main-layout">
+    <div class="main-layout config-hidden">
+      <div class="panel-config collapsed" id="panel-config">
+        <div class="panel-header">Config</div>
+        <div class="config-list" id="config-list"></div>
+      </div>
+
       <div class="panel-left">
         <div class="panel-header">History</div>
         <div class="history-list" id="history-list">
@@ -382,7 +420,7 @@
 
       <div class="panel-center">
         <div class="editor-wrapper">
-          <textarea id="editor" placeholder="Enter Python code...&#10;&#10;Ctrl+Enter to run" spellcheck="false"></textarea>
+          <textarea id="editor" placeholder="Enter Python code...&#10;&#10;Ctrl+Enter to run" spellcheck="false" wrap="off"></textarea>
           <div class="editor-toolbar">
             <button class="btn-clear" onclick="clearEditor()">Clear</button>
             <button class="btn-run" id="runBtn" onclick="runCode()">Run</button>
@@ -392,11 +430,6 @@
           <div class="output-label">Output</div>
           <div class="output-content placeholder" id="output">Run code to see output</div>
         </div>
-      </div>
-
-      <div class="panel-right">
-        <div class="panel-header">Config</div>
-        <div class="config-list" id="config-list"></div>
       </div>
     </div>
 
@@ -483,11 +516,6 @@
         return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       }
 
-      function codePreview(code) {
-        const line = code.split('\n')[0];
-        return line.length > 50 ? line.slice(0, 50) + '...' : line;
-      }
-
       async function refreshHistory() {
         try {
           const res = await fetch('/api/history');
@@ -505,23 +533,37 @@
         }
         const sorted = [...historyRecords].reverse();
         historyList.innerHTML = sorted
-          .map((r) => {
+          .map((r, i) => {
+            const prev = sorted[i - 1];
+            const isDuplicate = prev && prev.code === r.code;
             const badge = r.success ? '<span class="badge badge-ok">OK</span>' : '<span class="badge badge-err">ERR</span>';
             const active = r.id === activeHistoryId ? ' active' : '';
-            const meta = formatTime(r.timestamp) + (r.duration != null ? ' · ' + r.duration + 'ms' : '');
-            return `<div class="history-item${active}" id="hist-${r.id}" onclick="selectHistoryItem(${r.id})" tabindex="0" role="button">
+            const dupClass = isDuplicate ? ' duplicate' : '';
+            const meta = formatTime(r.timestamp) + (r.duration != null ? ' \xb7 ' + r.duration + 'ms' : '');
+            return `<div class="history-item${active}${dupClass}" id="hist-${r.id}" onclick="selectHistoryItem(${r.id})" tabindex="0" role="button">
   <div class="history-item-header">
     <span class="history-item-id">#${r.id}</span>
     ${badge}
     <span class="history-item-meta">${meta}</span>
   </div>
-  <div class="history-item-code">${escapeHtml(codePreview(r.code))}</div>
 </div>`;
           })
           .join('');
       }
 
       // Config
+      function toggleConfig() {
+        const panel = document.getElementById('panel-config');
+        const layout = document.querySelector('.main-layout');
+        const btn = document.getElementById('toggle-config-btn');
+        panel.classList.toggle('collapsed');
+        layout.classList.toggle('config-hidden');
+        btn.classList.toggle('active');
+        if (!panel.classList.contains('collapsed')) {
+          refreshConfig();
+        }
+      }
+
       async function refreshConfig() {
         try {
           const res = await fetch('/api/config');
@@ -551,7 +593,6 @@
 
         // Attach auto-save on blur or Enter for mutable inputs
         list.querySelectorAll('input[data-mutable]').forEach((input) => {
-          const original = input.value;
           input.addEventListener('blur', () => {
             const key = input.id.replace('cfg-', '');
             saveConfig(key, input);
@@ -615,7 +656,6 @@
 
       // Init
       refreshHistory();
-      refreshConfig();
       startPolling();
     </script>
   </body>
