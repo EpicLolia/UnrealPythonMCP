@@ -44,7 +44,11 @@ export default defineConfig([
     extends: ['html/recommended'],
     language: 'html/html',
     rules: {
-      'html/indent': ['error', 2],
+      // Formatting rules — disabled, Prettier handles these
+      'html/indent': 'off',
+      'html/no-extra-spacing-tags': 'off',
+      'html/require-closing-tags': 'off',
+      'html/attrs-newline': 'off',
     },
   },
 
