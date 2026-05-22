@@ -625,10 +625,8 @@ function renderConfig(items) {
   list.querySelectorAll('input[data-mutable]').forEach(input => {
     const original = input.value;
     input.addEventListener('blur', () => {
-      if (input.value !== original) {
-        const key = input.id.replace('cfg-', '');
-        saveConfig(key, input);
-      }
+      const key = input.id.replace('cfg-', '');
+      saveConfig(key, input);
     });
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {

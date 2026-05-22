@@ -8,8 +8,6 @@ import { formatCommandResult, executeTool, getAllToolsetSchemas, getUnrealPython
 import { get } from './config';
 import { startWorkbench } from './workbench';
 
-const enableToolsetRegistry = get('enableToolsetRegistry');
-
 const server = new McpServer(
   {
     version: '0.2.0',
@@ -77,7 +75,7 @@ server.registerResource(
   },
 );
 
-if (enableToolsetRegistry) {
+if (get('enableToolsetRegistry')) {
   server.registerTool(
     'get_toolset_schema',
     {

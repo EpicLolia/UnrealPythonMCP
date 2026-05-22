@@ -4,7 +4,7 @@
   "description": "Unreal Engine MCP using Unreal Python Remote Execution",
   "main": "dist/index.js",
   "bin": {
-    "unreal-python-mcp": "dist/server.js"
+    "unreal-python-mcp": "dist/main_mcp.js"
   },
   "files": [
     "dist"

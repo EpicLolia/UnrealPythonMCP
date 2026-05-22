@@ -15,6 +15,22 @@
     "editor.tabSize": 2,
     "cSpell.words": ["hasattr", "modelcontextprotocol", "toolsets"],
   },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "Launch Workbench",
+        "program": "${workspaceFolder}/dist/main_workbench.js",
+        "args": ["--inspect"],
+        "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+        "sourceMaps": true,
+        "preLaunchTask": "tsc build"
+      }
+    ],
+    "compounds": []
+  },
   "tasks": {
     "version": "2.0.0",
     "tasks": [

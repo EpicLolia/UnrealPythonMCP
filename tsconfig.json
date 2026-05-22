@@ -3,7 +3,7 @@
     "target": "es2024",
     "module": "commonjs",
     "rootDir": "./src",
-    "sourceMap": false,
+    "sourceMap": true,
     "types": ["node"],
     "outDir": "./dist",
     "esModuleInterop": true,
