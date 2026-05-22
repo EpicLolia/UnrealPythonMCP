@@ -15,15 +15,14 @@ export const commandHistory: CommandRecord[] = [];
 let nextRecordId = 1;
 
 function recordCommand(code: string, result: IRemoteExecutionMessageCommandOutputData, duration: number) {
-  const maxOutputLength = get('maxOutputLength');
-  const maxHistory = get('maxHistory');
+  const maxHistory = get('UNREAL_MAX_HISTORY');
   const output = formatCommandResult(result);
   commandHistory.push({
     id: nextRecordId++,
     timestamp: new Date().toISOString(),
     code,
     success: !hasException(result),
-    output: output.length > maxOutputLength ? output.slice(0, maxOutputLength) + '...' : output,
+    output,
     duration,
   });
   if (commandHistory.length > maxHistory) {
@@ -46,7 +45,11 @@ async function processQueue() {
   if (working) return;
   working = true;
 
-  const remoteConfig = new RemoteExecutionConfig(1, [get('multicastGroup'), get('multicastPort')], get('bindAddress'));
+  const remoteConfig = new RemoteExecutionConfig(
+    1,
+    [get('UNREAL_MULTICAST_GROUP'), get('UNREAL_MULTICAST_PORT')],
+    get('UNREAL_BIND_ADDRESS'),
+  );
   const re = new RemoteExecution(remoteConfig);
   try {
     await re.start();
@@ -70,7 +73,7 @@ async function processQueue() {
           const timer = setTimeout(() => {
             wakeUp = null;
             resolve();
-          }, get('connectionIdleMs'));
+          }, get('UNREAL_CONNECTION_IDLE_MS'));
           wakeUp = () => {
             clearTimeout(timer);
             wakeUp = null;

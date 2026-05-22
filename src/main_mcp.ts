@@ -75,7 +75,7 @@ server.registerResource(
   },
 );
 
-if (get('enableToolsetRegistry')) {
+if (get('UNREAL_ENABLE_TOOLSET_REGISTRY')) {
   server.registerTool(
     'get_toolset_schema',
     {
@@ -180,7 +180,7 @@ tool_name should be the short name (e.g. "get_level_info", not the fully qualifi
 }
 
 // Start Workbench HTTP server if enabled
-if (get('workbenchEnabled')) {
+if (get('UNREAL_ENABLE_WORKBENCH')) {
   startWorkbench();
 }
 

@@ -1,58 +1,44 @@
 // Centralized configuration for Unreal Python MCP Server
 
 export const config = {
-  multicastGroup: {
-    env: 'UNREAL_MULTICAST_GROUP',
+  UNREAL_MULTICAST_GROUP: {
     description: 'UDP multicast group address for Unreal remote execution',
     defaultValue: '239.0.0.1',
     mutable: true,
   },
-  multicastPort: {
-    env: 'UNREAL_MULTICAST_PORT',
+  UNREAL_MULTICAST_PORT: {
     description: 'UDP multicast port for Unreal remote execution',
     defaultValue: 6766,
     mutable: true,
   },
-  bindAddress: {
-    env: 'UNREAL_BIND_ADDRESS',
+  UNREAL_BIND_ADDRESS: {
     description: 'Local bind address for UDP communication',
     defaultValue: '127.0.0.1',
     mutable: true,
   },
-  connectionIdleMs: {
-    env: 'UNREAL_CONNECTION_IDLE_MS',
+  UNREAL_CONNECTION_IDLE_MS: {
     description: 'Milliseconds to keep connection alive after last command',
     defaultValue: 3000,
     mutable: true,
   },
-  enableToolsetRegistry: {
-    env: 'UNREAL_ENABLE_TOOLSET_REGISTRY',
+  UNREAL_ENABLE_TOOLSET_REGISTRY: {
     description: 'Enable ToolsetRegistry tools (requires UE 5.8+)',
     defaultValue: true,
     mutable: false,
   },
-  workbenchEnabled: {
-    env: 'UNREAL_MCP_WORKBENCH',
+  UNREAL_ENABLE_WORKBENCH: {
     description: 'Enable the Workbench HTTP server',
     defaultValue: false,
     mutable: false,
   },
-  workbenchPort: {
-    env: 'UNREAL_MCP_WORKBENCH_PORT',
+  UNREAL_WORKBENCH_PORT: {
     description: 'Base HTTP port for the Workbench server',
     defaultValue: 3120,
     mutable: false,
   },
-  maxHistory: {
-    env: 'UNREAL_MCP_MAX_HISTORY',
+  UNREAL_MAX_HISTORY: {
     description: 'Maximum number of command history records to keep',
-    defaultValue: 200,
-    mutable: true,
-  },
-  maxOutputLength: {
-    env: 'UNREAL_MCP_MAX_OUTPUT_LENGTH',
-    description: 'Maximum characters of output to store per command',
-    defaultValue: 2000,
+    defaultValue: 128,
     mutable: true,
   },
 } as const;
@@ -87,8 +73,7 @@ function setValue(key: ConfigKey, value: boolean | number | string | undefined) 
 
 function initValues() {
   for (const key of Object.keys(config) as ConfigKey[]) {
-    const def = config[key];
-    const env = process.env[def.env];
+    const env = process.env[key];
     setValue(key, env);
   }
 }
@@ -105,7 +90,6 @@ export function getConfigSummary() {
     const def = config[key];
     return {
       key,
-      env: def.env,
       description: def.description,
       defaultValue: def.defaultValue,
       mutable: def.mutable,

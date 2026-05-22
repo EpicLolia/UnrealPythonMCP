@@ -105,7 +105,7 @@ function handleRequest(req: http.IncomingMessage, res: http.ServerResponse) {
 }
 
 export function startWorkbench() {
-  const basePort = get('workbenchPort');
+  const basePort = get('UNREAL_WORKBENCH_PORT');
   const maxAttempts = 10;
 
   tryListen(basePort, 0, maxAttempts);
