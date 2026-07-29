@@ -174,6 +174,16 @@ tool_name should be the short name (e.g. "get_level_info", not the fully qualifi
       if (result.error) {
         return { content: [{ type: 'text', text: result.error }], isError: true };
       }
+      if (!result.is_complete) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `This tool runs asynchronously and has not finished (the result below is likely empty): ${result.result}`,
+            },
+          ],
+        };
+      }
       return { content: [{ type: 'text', text: result.result }] };
     },
   );

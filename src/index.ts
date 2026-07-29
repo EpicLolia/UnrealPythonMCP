@@ -172,19 +172,21 @@ else:
   return JSON.parse(result.output[0]?.output?.trim() ?? 'null');
 }
 
-export async function executeTool(toolset: string, toolName: string, argsJson: string): Promise<{ result: string; error: string } | null> {
+export async function executeTool(
+  toolset: string,
+  toolName: string,
+  argsJson: string,
+): Promise<{ result: string; error: string; is_complete: boolean } | null> {
   const code = `import unreal, json
 if hasattr(unreal, 'ToolsetRegistry'):
-    result, error = unreal.ToolsetRegistry.execute_tool(${JSON.stringify(toolset)}, ${JSON.stringify(toolName)}, ${JSON.stringify(argsJson)})
-    print(json.dumps({"__ok": True, "result": result, "error": error}))
-else:
-    print('{"__ok": false}')`;
+    r = unreal.ToolsetRegistry.execute_tool(${JSON.stringify(toolset)}, ${JSON.stringify(toolName)}, ${JSON.stringify(argsJson)})
+    result, error = r.value, r.error
+    print(json.dumps({"is_complete": bool(r.is_complete), "result": result, "error": error}))`;
   const result = await runCommand(code);
   const output = result.output[0]?.output?.trim();
   if (!output) return null;
   const parsed = JSON.parse(output);
-  if (!parsed.__ok) return null;
-  return { result: parsed.result ?? '', error: parsed.error ?? '' };
+  return { result: parsed.result ?? '', error: parsed.error ?? '', is_complete: parsed.is_complete ?? true };
 }
 
 // #endregion
