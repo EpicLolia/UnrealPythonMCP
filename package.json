@@ -1,6 +1,6 @@
 {
   "name": "unreal-python-mcp",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Unreal Engine MCP using Unreal Python Remote Execution",
   "main": "dist/index.js",
   "bin": {

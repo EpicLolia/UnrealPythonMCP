@@ -10,7 +10,7 @@ import { startWorkbench } from './workbench';
 
 const server = new McpServer(
   {
-    version: '0.2.0',
+    version: '0.2.1',
     name: 'unreal-python-mcp',
     title: 'Unreal Python MCP Server',
   },
